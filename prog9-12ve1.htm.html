@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الأوامر البرمجية - لعبة البرمجة الممتعة للأطفال</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght=400;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #f3f0ff; 
+        }
+        
+        @keyframes popIn {
+            0% { transform: scale(0.9); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .pop-animation {
+            animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg) scale(1); }
+            50% { transform: translateY(-6px) rotate(5deg) scale(1.05); }
+        }
+        .float-animation {
+            animation: float 2.5s ease-in-out infinite;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: confettiFall 4s linear forwards;
+        }
+
+        @keyframes confettiFall {
+            0% { transform: translateY(-50px) rotate(0deg); opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(105vh) rotate(720deg); opacity: 0; }
+        }
+
+        .custom-scroll::-webkit-scrollbar {
+            height: 8px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #c7d2fe;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between text-slate-800 antialiased overflow-x-hidden">
+
+    <div id="confetti-container" class="fixed inset-0 pointer-events-none z-50 overflow-hidden"></div>
+
+    <header class="bg-white shadow-sm border-b-2 border-indigo-100 py-3 px-4 md:px-8">
+        <div class="max-w-6xl mx-auto flex flex-wrap justify-between items-center gap-3">
+            <div class="flex items-center gap-3">
+                <div class="bg-amber-100 p-2 rounded-full border border-amber-200 float-animation">
+                    <svg class="w-8 h-8 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-black text-indigo-900 tracking-tight">الأوامر البرمجية</h1>
+                    <p class="text-xs md:text-sm text-slate-500 font-semibold">تعلم أسس البرمجة والتفكير المنطقي خطوة بخطوة!</p>
+                </div>
+            </div>
+
+            <div class="bg-amber-50 border-2 border-amber-300 rounded-2xl px-4 py-1.5 flex items-center gap-2 shadow-sm">
+                <span class="text-xl">🏆</span>
+                <div class="text-right">
+                    <p class="text-[10px] font-bold text-amber-700 leading-none">مجموع النقاط</p>
+                    <p id="total-score-display" class="text-base font-black text-amber-950">0</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
+                <button onclick="changeLevel(1)" id="btn-lvl-1" class="px-3.5 py-1.5 rounded-xl font-bold text-sm transition-all bg-indigo-600 text-white shadow-sm">المرحلة 1</button>
+                
+                <button onclick="changeLevel(2)" id="btn-lvl-2" class="px-3.5 py-1.5 rounded-xl font-bold text-sm transition-all text-slate-400 cursor-not-allowed flex items-center gap-1" disabled>
+                    <span>المرحلة 2</span>
+                    <span id="lock-lvl-2">🔒</span>
+                </button>
+                
+                <button onclick="changeLevel(3)" id="btn-lvl-3" class="px-3.5 py-1.5 rounded-xl font-bold text-sm transition-all text-slate-400 cursor-not-allowed flex items-center gap-1" disabled>
+                    <span>المرحلة 3</span>
+                    <span id="lock-lvl-3">🔒</span>
+                </button>
+                
+                <button onclick="changeLevel('sandbox')" id="btn-lvl-sandbox" class="px-3.5 py-1.5 rounded-xl font-bold text-sm transition-all text-slate-400 cursor-not-allowed flex items-center gap-1" disabled>
+                    <span>الوضع الحر</span>
+                    <span id="lock-lvl-sandbox">🔒</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow items-start">
+        
+        <section class="lg:col-span-5 bg-white p-4 md:p-6 rounded-3xl border-2 border-indigo-50 shadow-md flex flex-col items-center justify-between min-h-[550px] w-full">
+            
+            <div class="w-full bg-indigo-50 border border-indigo-100 rounded-2xl p-4 mb-4 flex items-start gap-3">
+                <div class="text-2xl pt-1">⭐</div>
+                <div>
+                    <h3 class="font-extrabold text-indigo-950 text-sm mb-1">اكتب تسلسل الأوامر البرمجية</h3>
+                    <p id="level-instruction" class="text-slate-700 text-xs md:text-sm font-semibold leading-relaxed">
+                        ماهي الاوامر التي يجب استعمالها بالترتيب للحصول على نفس الرسم؟ انطلق من المربع الذي فيه نجمة ⭐.
+                    </p>
+                </div>
+            </div>
+
+            <div class="w-full flex flex-col items-center gap-4 my-auto">
+                
+                <div class="relative bg-slate-50 p-3 rounded-2xl border-4 border-dashed border-indigo-200 shadow-inner">
+                    <div id="game-grid" dir="ltr" class="grid grid-cols-5 gap-1.5 w-72 h-72 sm:w-80 sm:h-80 md:w-96 md:h-96">
+                        </div>
+                </div>
+
+                <div id="target-map-container" class="flex items-center gap-3 bg-indigo-50/50 px-4 py-2 rounded-xl border border-indigo-100/80">
+                    <span class="text-xs font-bold text-indigo-800">الشكل المطلوب رسمه:</span>
+                    <div id="mini-target-grid" dir="ltr" class="grid grid-cols-5 gap-0.5 w-16 h-16 bg-white p-1 rounded-md border border-slate-200">
+                        </div>
+                </div>
+
+                <div id="sandbox-controls" class="hidden flex flex-col gap-2 items-center justify-center mt-1 w-full">
+                    <span class="text-xs bg-amber-100 border border-amber-200 text-amber-800 font-bold px-3 py-1.5 rounded-xl text-center">
+                        اضغط على مربعات الشبكة لرسم تصميمك الخاص، ثم برمج النجمة لترسمه!
+                    </span>
+                    <button onclick="triggerGrandFinale()" class="mt-1 bg-rose-600 hover:bg-rose-700 text-white font-extrabold px-6 py-2 rounded-xl text-xs shadow-md transition-all flex items-center gap-1.5">
+                        <span>إنهاء اللعبة وحساب النقاط الكلية 🏁</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="w-full mt-4 flex items-center gap-3 bg-amber-50 border border-amber-100 p-3 rounded-2xl">
+                <div class="w-12 h-12 flex-shrink-0 float-animation">
+                    <svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-md">
+                        <path d="M50 5 L63 38 L98 38 L70 59 L81 92 L50 72 L19 92 L30 59 L2 38 L37 38 Z" fill="#fbbf24" stroke="#d97706" stroke-width="4" />
+                        <circle cx="42" cy="48" r="4" fill="#000" />
+                        <circle cx="58" cy="48" r="4" fill="#000" />
+                        <path d="M46 58 Q50 62 54 58" stroke="#000" stroke-width="3" fill="none" stroke-linecap="round" />
+                    </svg>
+                </div>
+                <div class="text-xs md:text-sm text-amber-900">
+                    <p id="helper-bubble" class="font-bold">مرحباً! أنا النجمة السحرية، انطلق معي ولنبدأ البرمجة!</p>
+                </div>
+            </div>
+
+        </section>
+
+        <section class="lg:col-span-7 bg-white p-4 md:p-6 rounded-3xl border-2 border-indigo-50 shadow-md flex flex-col justify-between min-h-[550px] w-full">
+            
+            <div class="mb-4">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-lg font-extrabold text-indigo-950 flex items-center gap-2">
+                        <span>تسلسل الأوامر البرمجية</span>
+                        <span id="command-counter" class="bg-indigo-100 text-indigo-700 text-xs font-black px-2.5 py-1 rounded-full">0 / 15</span>
+                    </h2>
+                    <div class="flex gap-2">
+                        <button onclick="clearProgram()" class="text-xs font-bold text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-all flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            مسح البرنامج
+                        </button>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-400 mt-1">اضغط على الأوامر بالترتيب لملء الخانات البرمجية أدناه.</p>
+            </div>
+
+            <div id="program-scroll-area" class="flex-grow bg-slate-50 border border-slate-200/80 rounded-2xl p-4 min-h-[140px] flex items-center overflow-x-auto custom-scroll mb-6 relative">
+                <div id="empty-program-prompt" class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 pointer-events-none p-4 text-center">
+                    <svg class="w-10 h-10 mb-1 opacity-60 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                    <span class="font-bold text-sm">برنامجك فارغ حالياً!</span>
+                </div>
+
+                <div id="program-slots-container" class="flex gap-2.5 z-10 w-full justify-start">
+                    </div>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-sm font-extrabold text-slate-700 mb-3 flex items-center gap-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
+                    مجموعة الأوامر المتوفرة لبرمجتها:
+                </h3>
+                
+                <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 md:gap-3">
+                    <button onclick="addCommand('up')" class="bg-white hover:bg-indigo-50 border-2 border-indigo-200 p-2.5 rounded-xl transition-all flex flex-col items-center gap-1 group shadow-sm">
+                        <div class="bg-indigo-100 group-hover:bg-indigo-200 p-2 rounded-lg text-indigo-600">
+                            <svg class="w-6 h-6 transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+                        </div>
+                        <span class="text-[11px] font-black text-indigo-900">تحرّك مربعا إلى الأعلى </span>
+                    </button>
+
+                    <button onclick="addCommand('down')" class="bg-white hover:bg-indigo-50 border-2 border-indigo-200 p-2.5 rounded-xl transition-all flex flex-col items-center gap-1 group shadow-sm">
+                        <div class="bg-indigo-100 group-hover:bg-indigo-200 p-2 rounded-lg text-indigo-600">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+                        </div>
+                        <span class="text-[11px] font-black text-indigo-900">
+                            تحرّك مربعا إلى الأسفل</span>
+                    </button>
+
+                    <button onclick="addCommand('left')" class="bg-white hover:bg-indigo-50 border-2 border-indigo-200 p-2.5 rounded-xl transition-all flex flex-col items-center gap-1 group shadow-sm">
+                        <div class="bg-indigo-100 group-hover:bg-indigo-200 p-2 rounded-lg text-indigo-600">
+                            <svg class="w-6 h-6 transform rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+                        </div>
+                        <span class="text-[11px] font-black text-indigo-900">
+                            تحرّك مربعا إلى اليسار</span>
+                    </button>
+
+                    <button onclick="addCommand('right')" class="bg-white hover:bg-indigo-50 border-2 border-indigo-200 p-2.5 rounded-xl transition-all flex flex-col items-center gap-1 group shadow-sm">
+                        <div class="bg-indigo-100 group-hover:bg-indigo-200 p-2 rounded-lg text-indigo-600">
+                            <svg class="w-6 h-6 transform -rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+                        </div>
+                        <span class="text-[11px] font-black text-indigo-900">
+                            تحرّك مربعا إلى اليمين </span>
+                    </button>
+
+                    <button onclick="addCommand('color')" class="bg-amber-50 hover:bg-amber-100 border-2 border-amber-300 p-2.5 rounded-xl transition-all flex flex-col items-center gap-1 group shadow-sm col-span-2 sm:col-span-1">
+                        <div class="bg-amber-200 group-hover:bg-amber-300 p-2 rounded-lg text-amber-800">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                        </div>
+                        <span class="text-[11px] font-black text-amber-900">لوّن المربع</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-indigo-900/5 p-4 rounded-2xl border border-indigo-900/10 flex flex-wrap gap-3 items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-indigo-950">سرعة التشغيل:</span>
+                    <select id="execution-speed" class="bg-white border-2 border-indigo-200 rounded-xl px-2.5 py-1.5 text-xs font-black text-indigo-900">
+                        <option value="600">عادي (600ms)</option>
+                        <option value="350" selected>سريع (350ms)</option>
+                        <option value="150">فائق السرعة (150ms)</option>
+                    </select>
+                </div>
+
+                <div class="flex gap-2 w-full sm:w-auto justify-end">
+                    <button id="btn-run-program" onclick="startExecution()" class="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold px-8 py-3 rounded-xl text-sm shadow-md flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path></svg>
+                        تشغيل البرنامج 🚀
+                    </button>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <div id="win-modal" class="hidden fixed inset-0 bg-indigo-950/70 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full text-center shadow-2xl border-4 border-indigo-100 pop-animation">
+            
+            <div id="win-modal-mascot" class="w-24 h-24 mx-auto mb-2 float-animation">
+                <svg viewBox="0 0 100 100" class="w-full h-full">
+                    <circle cx="50" cy="50" r="45" fill="#fef3c7" />
+                    <path d="M50 15 L60 42 L88 42 L66 58 L74 85 L50 68 L26 85 L34 58 L12 42 L40 42 Z" fill="#fbbf24" stroke="#d97706" stroke-width="3" />
+                </svg>
+            </div>
+
+            <h2 id="win-modal-title" class="text-2xl font-black text-indigo-950 mb-1">ممتاز جداً! 🎉</h2>
+            <p id="win-modal-desc" class="text-slate-600 text-xs mb-4">لقد نجحت في تركيب الأوامر البرمجية ورسم الشكل.</p>
+            
+            <div id="win-score-box" class="bg-indigo-50 border border-indigo-100 p-4 rounded-2xl mb-6 grid grid-cols-2 gap-2 text-center shadow-inner">
+                <div class="border-l border-indigo-200/60">
+                    <p class="text-xs font-bold text-indigo-600">نقاط هذه المرحلة</p>
+                    <p id="lvl-score-earned" class="text-2xl font-black text-indigo-900 mt-1">+0</p>
+                </div>
+                <div>
+                    <p class="text-xs font-bold text-amber-600">المجموع الكلي الحالي</p>
+                    <p id="total-score-earned" class="text-2xl font-black text-amber-600 mt-1">0</p>
+                </div>
+            </div>
+
+            <div id="grand-score-dashboard" class="hidden bg-gradient-to-r from-amber-500 to-orange-500 p-5 rounded-2xl mb-6 text-white text-center shadow-lg pop-animation border-2 border-yellow-300">
+                <p class="text-xs font-extrabold uppercase tracking-widest text-amber-100">🏆 لوحة الشرف الكبرى 🏆</p>
+                <h3 class="text-3xl font-black my-2" id="grand-total-display">0 نقطة</h3>
+                <p id="grand-rating-text" class="text-xs font-semibold text-white/90">لقد أكملت اللعبة و تحصلت على وسام التميز بنجاح
+                    </p>
+            </div>
+
+            <div id="standard-modal-actions" class="flex gap-3 justify-center">
+                <button id="btn-retry-level" onclick="retryCurrentLevel();" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold px-5 py-2.5 rounded-xl text-sm transition-all">إعادة 🔄</button>
+                <button id="btn-next-level" onclick="goToNextLevelImmediately()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold px-6 py-2.5 rounded-xl text-sm shadow-md transition-all flex items-center gap-1">
+                    <span>المرحلة التالية ➡️</span>
+                </button>
+            </div>
+
+            <div id="branch-choice-actions" class="hidden flex flex-col gap-2.5 w-full mt-2">
+                <button onclick="chooseToContinueToSandbox()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-3 rounded-2xl text-sm shadow-md transition-all flex items-center justify-center gap-1">
+                    <span>🚀 مواصلة اللعب بالوضع الحر (لزيادة النقاط)</span>
+                </button>
+                <button onclick="triggerGrandFinale()" class="w-full bg-rose-600 hover:bg-rose-700 text-white font-black py-3 rounded-2xl text-sm shadow-sm transition-all flex items-center justify-center gap-1">
+                    <span>🏁 إنهاء اللعبة ورؤية النتيجة النهائية</span>
+                </button>
+            </div>
+
+            <div id="sandbox-choice-actions" class="hidden flex flex-col gap-2.5 w-full mt-2">
+                <button onclick="resetSandboxForNewDrawing()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-3 rounded-2xl text-sm shadow-md transition-all flex items-center justify-center gap-1">
+                    <span>🎨 رسم شكل آخر وإضافته للنقاط</span>
+                </button>
+                <button onclick="triggerGrandFinale()" class="w-full bg-rose-600 hover:bg-rose-700 text-white font-black py-3 rounded-2xl text-sm shadow-sm transition-all flex items-center justify-center gap-1">
+                    <span>🏁 إنهاء اللعبة ورؤية لوحة الشرف</span>
+                </button>
+            </div>
+
+            <div id="final-modal-actions" class="hidden flex flex-col gap-2.5 w-full mt-2">
+                <button onclick="restartWholeGame()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-2xl text-xs transition-all">
+                    <span>غلق واللعب من جديد 🔄</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="error-modal" class="hidden fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 max-w-sm w-full text-center shadow-2xl border-4 border-red-50 pop-animation">
+            <div class="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+            </div>
+            <h3 id="error-title" class="text-lg font-black text-red-950 mb-1">خطأ برمجى!</h3>
+            <p id="error-desc" class="text-slate-600 text-xs md:text-sm mb-5 leading-relaxed">تأكد من تركيب خطوات الحركة بالشكل الصحيح.</p>
+            <button onclick="closeErrorModal()" class="w-full bg-red-500 hover:bg-red-600 text-white font-extrabold py-2.5 rounded-xl text-sm transition-all">حسناً، سأعدّله 🛠️</button>
+        </div>
+    </div>
+
+    <footer class="bg-indigo-950 text-indigo-100 py-4 text-center text-sm font-black tracking-wider border-t border-indigo-900">
+        <div class="max-w-6xl mx-auto px-4">
+            <span>junior-preneur</span>
+        </div>
+    </footer>
+
+    <script>
+        const LEVELS = {
+            1: {
+                title: "المرحلة الأولى",
+                target: [{r: 0, c: 1}, {r: 0, c: 2}, {r: 0, c: 3}, {r: 1, c: 0}, {r: 1, c: 4}],
+                maxCommands: 15,
+                hint: "جرّب الضغط على الأوامر لتشاهد النجمة تتحرك وتلوّن مباشرة على اللوحة! ⭐"
+            },
+            2: {
+                title: "المرحلة الثانية",
+                target: [{r: 1, c: 1}, {r: 2, c: 2}, {r: 3, c: 3}, {r: 4, c: 4}],
+                maxCommands: 15,
+                hint: "النجمة مستعدة في نقطة البداية ⭐ (أعلى اليسار)! ركّب خطواتك بالكامل ثم اضغط تشغيل!"
+            },
+            3: {
+                title: "المرحلة الثالثة",
+                target: [{r: 1, c: 0}, {r: 2, c: 0}, {r: 3, c: 0}, {r: 4, c: 0}, {r: 4, c: 1}, {r: 4, c: 2}],
+                maxCommands: 15,
+                hint: "برمج النجمة لرسم شكل الحرف L بالكامل، واضغط على التشغيل لتشاهد كودك!"
+            },
+            'sandbox': {
+                title: "الوضع الحر",
+                target: [], 
+                maxCommands: 15,
+                hint: "ارسم تصاميمك السوداء الخاصة واكتب كودها لتكسب نقاطاً إضافية للمجموع النهائي!"
+            }
+        };
+
+        let unlockedLevels = { 1: true, 2: false, 3: false, 'sandbox': false };
+
+        let currentLevelKey = 1;
+        let commandQueue = []; 
+        let robotPos = { r: 0, c: 0 }; 
+        let gridColored = Array(5).fill(null).map(() => Array(5).fill(false)); 
+        let sandboxTargetGrid = Array(5).fill(null).map(() => Array(5).fill(false)); 
+        
+        let scoresHistory = { 1: 0, 2: 0, 3: 0, 'sandbox': 0 };
+        let totalScore = 0;
+
+        let isExecuting = false;
+        let executionInterval = null;
+        let currentStepIndex = 0;
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playSynthSound(type) {
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'click') {
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime); osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+                } else if (type === 'move') {
+                    osc.type = 'triangle'; osc.frequency.setValueAtTime(280, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime); osc.start(); osc.stop(audioCtx.currentTime + 0.15);
+                } else if (type === 'color') {
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime); osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+                } else if (type === 'win') {
+                    const notes = [261.63, 329.63, 392.00, 523.25];
+                    notes.forEach((freq, idx) => {
+                        const subOsc = audioCtx.createOscillator(); const subGain = audioCtx.createGain();
+                        subOsc.connect(subGain); subGain.connect(audioCtx.destination);
+                        subOsc.frequency.setValueAtTime(freq, audioCtx.currentTime + (idx * 0.1));
+                        subGain.gain.setValueAtTime(0.1, audioCtx.currentTime + (idx * 0.1));
+                        subOsc.start(audioCtx.currentTime + (idx * 0.1)); subOsc.stop(audioCtx.currentTime + (idx * 0.1) + 0.2);
+                    });
+                } else if (type === 'fail') {
+                    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime); osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+                }
+            } catch(e) {}
+        }
+
+        window.onload = function() {
+            updateLevelsLockUI();
+            changeLevel(1);
+            calculateTotalScore();
+        };
+
+        function updateLevelsLockUI() {
+            ['2', '3', 'sandbox'].forEach(lvl => {
+                const btn = document.getElementById(`btn-lvl-${lvl}`);
+                const lockSpan = document.getElementById(`lock-lvl-${lvl}`);
+                if (unlockedLevels[lvl]) {
+                    btn.disabled = false;
+                    if (lvl === 'sandbox') {
+                        btn.className = "px-3.5 py-1.5 rounded-xl font-bold text-sm transition-all text-slate-600 hover:bg-slate-200 flex items-center gap-1";
+                    } else {
+                        btn.className = "px-3.5 py-1.5 rounded-xl font-bold text-sm transition-all text-slate-600 hover:bg-slate-200";
+                    }
+                    if (lockSpan) lockSpan.classList.add("hidden");
+                } else {
+                    btn.disabled = true;
+                    btn.className = "px-3.5 py-1.5 rounded-xl font-bold text-sm transition-all text-slate-400 cursor-not-allowed flex items-center gap-1";
+                    if (lockSpan) lockSpan.classList.remove("hidden");
+                }
+            });
+        }
+
+        function scrollToStartOfProgram() {
+            const scrollArea = document.getElementById("program-scroll-area");
+            if (scrollArea) {
+                scrollArea.scrollTo({ left: 0, behavior: 'smooth' });
+            }
+        }
+
+        function changeLevel(levelKey) {
+            if (!unlockedLevels[levelKey]) return;
+
+            playSynthSound('click');
+            currentLevelKey = levelKey;
+            
+            ['1', '2', '3', 'sandbox'].forEach(key => {
+                const btn = document.getElementById(`btn-lvl-${key}`);
+                if (key == levelKey) {
+                    btn.className = "px-3.5 py-1.5 rounded-xl font-bold text-sm transition-all bg-indigo-600 text-white shadow-sm";
+                } else {
+                    if (unlockedLevels[key]) {
+                        btn.className = "px-3.5 py-1.5 rounded-xl font-bold text-sm transition-all text-slate-600 hover:bg-slate-200";
+                    }
+                }
+            });
+
+            const levelData = LEVELS[levelKey];
+            const instructionEl = document.getElementById("level-instruction");
+            commandQueue = []; 
+
+            if (levelKey == 1) {
+                instructionEl.innerHTML = `ماهي الاوامر التي يجب استعمالها بالترتيب للحصول على نفس الرسم؟ انطلق من المربع الذي فيه نجمة ⭐.<br><span class="text-emerald-600 font-bold block mt-2 animate-pulse">💡 ميزة حركية: ستتحرك النجمة فوراً لتعرض لك خطوتك مباشرة في هذه المرحلة!</span>`;
+            } else if (levelKey === 'sandbox') {
+                instructionEl.innerHTML = `أهلاً بك في الوضع الحر الإبداعي! ارسم المربعات بنفسك بالضغط عليها، ثم برمج النجمة لتقوم بتتبع كودك ورسمه لزيادة حصيلة نقاطك الإجمالية!`;
+            } else {
+                instructionEl.innerHTML = `ماهي الاوامر التي يجب استعمالها بالترتيب للحصول على نفس الرسم؟ انطلق من المربع الذي فيه نجمة ⭐.<br><span class="text-indigo-800 font-bold block mt-2">🔒 تحدي أصعب: لن تظهر حركة النجمة إلا بعد الضغط على زر التشغيل 🚀!</span>`;
+            }
+
+            document.getElementById("helper-bubble").innerText = levelData.hint || 'ابدأ البرمجة الآن!';
+            
+            if (levelKey === 'sandbox') {
+                document.getElementById("sandbox-controls").classList.remove("hidden");
+                document.getElementById("target-map-container").classList.add("hidden");
+                sandboxTargetGrid = Array(5).fill(null).map(() => Array(5).fill(false));
+            } else {
+                document.getElementById("sandbox-controls").classList.add("hidden");
+                document.getElementById("target-map-container").classList.remove("hidden");
+            }
+
+            resetGridAndRobot();
+            renderMiniTargetMap();
+            
+            setTimeout(scrollToStartOfProgram, 50);
+        }
+
+        function renderMiniTargetMap() {
+            const container = document.getElementById("mini-target-grid");
+            container.innerHTML = "";
+            for (let r = 0; r < 5; r++) {
+                for (let c = 0; c < 5; c++) {
+                    const cell = document.createElement("div");
+                    cell.className = "rounded-[2px] transition-colors duration-200 ";
+                    if (r === 0 && c === 0) {
+                        cell.className += "bg-amber-100 flex items-center justify-center text-[8px]"; cell.innerHTML = "⭐";
+                    } else {
+                        if (isCellInTarget(r, c)) cell.className += "bg-black"; 
+                        else cell.className += "bg-slate-100";
+                    }
+                    container.appendChild(cell);
+                }
+            }
+        }
+
+        function resetSandboxForNewDrawing() {
+            closeWinModal();
+            sandboxTargetGrid = Array(5).fill(null).map(() => Array(5).fill(false)); 
+            clearProgram(); 
+            resetGridAndRobot(); 
+            renderMiniTargetMap();
+            document.getElementById("helper-bubble").innerText = "تم مسح الشكل القديم بنجاح! ارسم الآن شكلاً جديداً رائعة وقم ببرمجته! 🎨";
+            setTimeout(scrollToStartOfProgram, 50);
+        }
+
+        function retryCurrentLevel() {
+            closeWinModal();
+            clearProgram(); 
+            resetGridAndRobot(); 
+            setTimeout(scrollToStartOfProgram, 50);
+        }
+
+        function goToNextLevelImmediately() {
+            playSynthSound('click');
+            closeWinModal();
+            
+            if (currentLevelKey == 1) {
+                unlockedLevels[2] = true;
+                updateLevelsLockUI();
+                changeLevel(2);
+            } else if (currentLevelKey == 2) {
+                unlockedLevels[3] = true;
+                updateLevelsLockUI();
+                changeLevel(3);
+            }
+        }
+
+        function isCellInTarget(r, c) {
+            if (currentLevelKey === 'sandbox') return sandboxTargetGrid[r][c];
+            return LEVELS[currentLevelKey].target.some(t => t.r === r && t.c === c);
+        }
+
+        function isSandboxEmpty() {
+            for (let r = 0; r < 5; r++) {
+                for (let c = 0; c < 5; c++) { if (sandboxTargetGrid[r][c]) return false; }
+            }
+            return true;
+        }
+
+        function toggleSandboxCell(r, c) {
+            if (currentLevelKey !== 'sandbox' || isExecuting) return;
+            if (r === 0 && c === 0) return; 
+            playSynthSound('click');
+            sandboxTargetGrid[r][c] = !sandboxTargetGrid[r][c];
+            updateLivePreview();
+        }
+
+        function updateLivePreview() {
+            if (isExecuting) return;
+            if (currentLevelKey != 1) {
+                robotPos = { r: 0, c: 0 }; gridColored = Array(5).fill(null).map(() => Array(5).fill(false));
+                renderInteractiveGrid(); return;
+            }
+            let tempR = 0, tempC = 0;
+            let tempColored = Array(5).fill(null).map(() => Array(5).fill(false));
+            for (let i = 0; i < commandQueue.length; i++) {
+                const cmd = commandQueue[i];
+                if (cmd === 'up') tempR = Math.max(0, tempR - 1);
+                else if (cmd === 'down') tempR = Math.min(4, tempR + 1);
+                else if (cmd === 'left') tempC = Math.max(0, tempC - 1);
+                else if (cmd === 'right') tempC = Math.min(4, tempC + 1);
+                else if (cmd === 'color') tempColored[tempR][tempC] = true;
+            }
+            robotPos = { r: tempR, c: tempC }; gridColored = tempColored;
+            renderInteractiveGrid();
+        }
+
+        function renderInteractiveGrid() {
+            const gridEl = document.getElementById("game-grid");
+            gridEl.innerHTML = "";
+            for (let r = 0; r < 5; r++) {
+                for (let c = 0; c < 5; c++) {
+                    const cell = document.createElement("button");
+                    cell.disabled = (currentLevelKey !== 'sandbox' || isExecuting);
+                    cell.onclick = () => toggleSandboxCell(r, c);
+
+                    let bgStyle = "bg-white", borderStyle = "border-2 border-slate-200 hover:border-indigo-300", contentHTML = "";
+
+                    if (gridColored[r][c]) {
+                        if (isCellInTarget(r, c)) {
+                            bgStyle = "bg-gradient-to-br from-emerald-400 to-teal-600 text-white pop-animation shadow-md";
+                            borderStyle = "border-2 border-emerald-500"; contentHTML = `<span class="text-xl font-black">✓</span>`;
+                        } else {
+                            bgStyle = "bg-gradient-to-br from-rose-500 to-red-600 text-white pop-animation shadow-md";
+                            borderStyle = "border-2 border-red-600"; contentHTML = `<span class="text-xl font-black">✕</span>`;
+                        }
+                    } else if (isCellInTarget(r, c)) {
+                        bgStyle = "bg-black text-white hover:bg-slate-900"; borderStyle = "border-2 border-slate-900";
+                    }
+
+                    cell.className = `relative rounded-2xl flex items-center justify-center transition-all ${bgStyle} ${borderStyle} shadow-sm`;
+                    if (r === 0 && c === 0) contentHTML += `<span class="text-2xl drop-shadow-sm opacity-40">⭐</span>`;
+
+                    if (robotPos.r === r && robotPos.c === c) {
+                        contentHTML = `<div class="absolute inset-1 bg-amber-400 rounded-xl flex items-center justify-center shadow-md pop-animation z-20 float-animation border-2 border-amber-300"><svg viewBox="0 0 100 100" class="w-12 h-12"><path d="M50 8 L62 38 L95 38 L68 58 L78 88 L50 70 L22 88 L32 58 L5 38 L38 38 Z" fill="#fbbf24" stroke="#d97706" stroke-width="4" /><circle cx="40" cy="48" r="5" fill="#000" /><circle cx="60" cy="48" r="5" fill="#000" /><path d="M44 58 Q50 64 56 58" stroke="#000" stroke-width="4" fill="none" stroke-linecap="round" /></svg></div>`;
+                    }
+                    cell.innerHTML = contentHTML; gridEl.appendChild(cell);
+                }
+            }
+        }
+
+        function resetGridAndRobot() {
+            if (isExecuting) { clearInterval(executionInterval); isExecuting = false; }
+            document.getElementById("btn-run-program").disabled = false;
+            document.getElementById("btn-run-program").classList.remove("opacity-50", "cursor-not-allowed");
+            robotPos = { r: 0, c: 0 }; gridColored = Array(5).fill(null).map(() => Array(5).fill(false));
+            currentStepIndex = 0; renderInteractiveGrid(); renderProgramSlots();
+        }
+
+        function startExecution() {
+            if (isExecuting) return;
+            if (commandQueue.length === 0) { showError("برنامج فارغ!", "يجب عليك إضافة أمر واحد على الأثل للتشغيل 🚀!"); return; }
+            if (currentLevelKey === 'sandbox' && isSandboxEmpty()) { showError("لوحة الرسم فارغة!", "في الوضع الحر، لوّن بعض مربعات الشبكة أولاً!"); return; }
+
+            robotPos = { r: 0, c: 0 }; gridColored = Array(5).fill(null).map(() => Array(5).fill(false));
+            currentStepIndex = 0; isExecuting = true;
+
+            document.getElementById("btn-run-program").disabled = true;
+            document.getElementById("btn-run-program").classList.add("opacity-50", "cursor-not-allowed");
+
+            const speed = parseInt(document.getElementById("execution-speed").value) || 350;
+            executionInterval = setInterval(executeStep, speed);
+        }
+
+        function executeStep() {
+            if (currentStepIndex >= commandQueue.length) { finishExecution(); return; }
+            const command = commandQueue[currentStepIndex];
+            highlightActiveCommandSlot(currentStepIndex);
+
+            let nextR = robotPos.r, nextC = robotPos.c;
+            if (command === 'up') nextR--;
+            else if (command === 'down') nextR++;
+            else if (command === 'left') nextC--;
+            else if (command === 'right') nextC++;
+            else if (command === 'color') { gridColored[robotPos.r][robotPos.c] = true; playSynthSound('color'); }
+
+            if (nextR < 0 || nextR > 4 || nextC < 0 || nextC > 4) {
+                clearInterval(executionInterval); playSynthSound('fail');
+                showError("خارج حدود الشبكة! 💥", `الأمر رقم (${currentStepIndex + 1}) جعل النجمة تخرج عن حدود لوحة الرسم!`);
+                resetGridAndRobot(); return;
+            }
+
+            if (command !== 'color') { robotPos.r = nextR; robotPos.c = nextC; playSynthSound('move'); }
+            renderInteractiveGrid(); currentStepIndex++;
+        }
+
+        function highlightActiveCommandSlot(index) {
+            for (let i = 0; i < 15; i++) {
+                const slot = document.getElementById(`slot-${i}`);
+                if (slot) slot.classList.remove("border-emerald-500", "ring-4", "ring-emerald-200", "scale-105");
+            }
+            const activeSlot = document.getElementById(`slot-${index}`);
+            if (activeSlot) {
+                activeSlot.classList.add("border-emerald-500", "ring-4", "ring-emerald-200", "scale-105");
+                
+                // This added line scrolls smoothly to the active command to let the child keep track easily!
+                activeSlot.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
+        }
+
+        function finishExecution() {
+            clearInterval(executionInterval); isExecuting = false;
+            document.getElementById("btn-run-program").disabled = false;
+            document.getElementById("btn-run-program").classList.remove("opacity-50", "cursor-not-allowed");
+
+            let isSuccessful = true;
+            for (let r = 0; r < 5; r++) {
+                for (let c = 0; c < 5; c++) {
+                    if (gridColored[r][c] !== isCellInTarget(r, c)) { isSuccessful = false; break; }
+                }
+            }
+
+            if (isSuccessful) {
+                let levelPoints = 100; 
+                if (commandQueue.length <= 8) levelPoints += 50;
+                else if (commandQueue.length <= 12) levelPoints += 25;
+
+                if (currentLevelKey === 'sandbox') {
+                    scoresHistory['sandbox'] += levelPoints;
+                } else {
+                    scoresHistory[currentLevelKey] = levelPoints;
+                }
+                
+                if (currentLevelKey == 1) unlockedLevels[2] = true;
+                if (currentLevelKey == 2) unlockedLevels[3] = true;
+                if (currentLevelKey == 3) unlockedLevels['sandbox'] = true; 
+                
+                calculateTotalScore();
+                playSynthSound('win');
+                
+                triggerConfetti();
+                
+                setTimeout(() => {
+                    showWinModal(levelPoints);
+                }, 3500);
+
+            } else {
+                playSynthSound('fail');
+                showError("لم تتطابق الرسمة! 🧐", "البرنامج اكتمل، ولكن الرسم لم يطابق الشكل المطلوب تماماً. حاول مجدداً!");
+                resetGridAndRobot(); 
+            }
+        }
+
+        function calculateTotalScore() {
+            totalScore = scoresHistory[1] + scoresHistory[2] + scoresHistory[3] + scoresHistory['sandbox'];
+            document.getElementById("total-score-display").innerText = totalScore;
+        }
+
+        function addCommand(cmdType) {
+            if (isExecuting) return;
+            playSynthSound('click');
+            if (commandQueue.length >= 15) { showError("الحد الأقصى للأوامر!", "لقد استخدمت السعة القصوى المتاحة."); return; }
+            commandQueue.push(cmdType); 
+            updateLivePreview(); 
+            renderProgramSlots();
+
+            // Auto-scroll to the end of container when a new command block is pushed
+            setTimeout(() => {
+                const scrollArea = document.getElementById("program-scroll-area");
+                if (scrollArea) scrollArea.scrollTo({ left: scrollArea.scrollWidth, behavior: 'smooth' });
+            }, 50);
+        }
+
+        function removeCommandAtIndex(idx) {
+            if (isExecuting) return; playSynthSound('click');
+            commandQueue.splice(idx, 1); updateLivePreview(); renderProgramSlots();
+        }
+
+        function clearProgram() {
+            if (isExecuting) return; playSynthSound('click');
+            commandQueue = []; updateLivePreview(); renderProgramSlots();
+        }
+
+        function renderProgramSlots() {
+            const container = document.getElementById("program-slots-container");
+            const emptyPrompt = document.getElementById("empty-program-prompt");
+            container.innerHTML = "";
+            document.getElementById("command-counter").innerText = `${commandQueue.length} / 15`;
+
+            if (commandQueue.length === 0) emptyPrompt.classList.remove("hidden");
+            else emptyPrompt.classList.add("hidden");
+
+            for (let i = 0; i < 15; i++) {
+                const slot = document.createElement("div"); slot.id = `slot-${i}`;
+                slot.className = "flex-shrink-0 w-14 h-20 rounded-xl border-2 flex flex-col items-center justify-between p-1.5 transition-all select-none ";
+
+                if (i < commandQueue.length) {
+                    const cmd = commandQueue[i];
+                    slot.className += "bg-indigo-50 border-indigo-400 cursor-pointer hover:bg-red-50 hover:border-red-400 group";
+                    slot.onclick = () => removeCommandAtIndex(i);
+                    let icon = "", lbl = "";
+                    if (cmd === 'up') { icon = `<svg class="w-6 h-6 text-indigo-700 transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>`; lbl = "أعلى"; }
+                    else if (cmd === 'down') { icon = `<svg class="w-6 h-6 text-indigo-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>`; lbl = "أسفل"; }
+                    else if (cmd === 'left') { icon = `<svg class="w-6 h-6 text-indigo-700 transform rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>`; lbl = "يسار"; }
+                    else if (cmd === 'right') { icon = `<svg class="w-6 h-6 text-indigo-700 transform -rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>`; lbl = "يمين"; }
+                    else if (cmd === 'color') { icon = `<svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>`; lbl = "لوّن"; }
+
+                    slot.innerHTML = `<span class="text-[10px] text-indigo-500 font-extrabold group-hover:hidden">${i + 1}</span><span class="text-[10px] text-red-500 font-extrabold hidden group-hover:block">مسح</span><div class="my-auto">${icon}</div><span class="text-[9px] font-bold text-slate-500 group-hover:text-red-500">${lbl}</span>`;
+                } else {
+                    slot.className += "bg-white border-slate-200 border-dashed opacity-55";
+                    slot.innerHTML = `<span class="text-[10px] text-slate-300 font-bold">${i + 1}</span><div class="w-2.5 h-2.5 rounded-full bg-slate-100 my-auto"></div><span class="text-[8px] text-slate-300 font-bold">-</span>`;
+                }
+                container.appendChild(slot);
+            }
+        }
+
+        function showError(title, desc) {
+            document.getElementById("error-title").innerText = title;
+            document.getElementById("error-desc").innerText = desc;
+            document.getElementById("error-modal").classList.remove("hidden");
+        }
+
+        function closeErrorModal() {
+            playSynthSound('click'); document.getElementById("error-modal").classList.add("hidden");
+        }
+
+        function showWinModal(pointsEarned) {
+            const titleEl = document.getElementById("win-modal-title");
+            const descEl = document.getElementById("win-modal-desc");
+            const scoreBox = document.getElementById("win-score-box");
+            const grandDashboard = document.getElementById("grand-score-dashboard");
+            const standardActions = document.getElementById("standard-modal-actions");
+            const branchChoiceActions = document.getElementById("branch-choice-actions");
+            const sandboxChoiceActions = document.getElementById("sandbox-choice-actions");
+            const finalActions = document.getElementById("final-modal-actions");
+
+            scoreBox.classList.remove("hidden");
+            grandDashboard.classList.add("hidden");
+            standardActions.classList.remove("hidden");
+            branchChoiceActions.classList.add("hidden");
+            sandboxChoiceActions.classList.add("hidden");
+            finalActions.classList.add("hidden");
+
+            document.getElementById("lvl-score-earned").innerText = `+${pointsEarned}`;
+            document.getElementById("total-score-earned").innerText = totalScore;
+
+            if (currentLevelKey == 3) {
+                titleEl.innerText = "لقد أكملت المرحلة الثالثة بنجاح! 🎉";
+                descEl.innerText = "ماذا تفضل أن تفعل الآن؟ يمكنك مواصلة الإبداع في الوضع الحر وزيادة نقاطك أو إنهاء اللعبة ورؤية النتيجة كليا!";
+                standardActions.classList.add("hidden");
+                branchChoiceActions.classList.remove("hidden");
+            } else if (currentLevelKey === 'sandbox') {
+                titleEl.innerText = "تصميم وإبداع رائع! ✨";
+                descEl.innerText = `لقد برمجت تصميمك الحر بنجاح فائق وحصلت على ${pointsEarned} نقطة إضافية لترتفع نقاطك الكلية!`;
+                standardActions.classList.add("hidden");
+                sandboxChoiceActions.classList.remove("hidden"); 
+            } else {
+                titleEl.innerText = "ممتاز جداً! 🎉";
+                descEl.innerText = `لقد نجحت في برمجة النجمة لتلوين المربعات المطلوبة بدقة وحصلت على نقاط تفوق!`;
+            }
+
+            document.getElementById("win-modal").classList.remove("hidden");
+        }
+
+        function closeWinModal() {
+            playSynthSound('click'); document.getElementById("win-modal").classList.add("hidden");
+        }
+
+        function chooseToContinueToSandbox() {
+            closeWinModal();
+            changeLevel('sandbox');
+        }
+
+        function triggerGrandFinale() {
+            playSynthSound('win');
+            triggerConfetti();
+
+            const titleEl = document.getElementById("win-modal-title");
+            const descEl = document.getElementById("win-modal-desc");
+            const scoreBox = document.getElementById("win-score-box");
+            const grandDashboard = document.getElementById("grand-score-dashboard");
+            const standardActions = document.getElementById("standard-modal-actions");
+            const branchChoiceActions = document.getElementById("branch-choice-actions");
+            const sandboxChoiceActions = document.getElementById("sandbox-choice-actions");
+            const finalActions = document.getElementById("final-modal-actions");
+            const mascotContainer = document.getElementById("win-modal-mascot");
+
+            scoreBox.classList.add("hidden");
+            standardActions.classList.add("hidden");
+            branchChoiceActions.classList.add("hidden");
+            sandboxChoiceActions.classList.add("hidden");
+            
+            grandDashboard.classList.remove("hidden");
+            finalActions.classList.remove("hidden");
+
+            titleEl.innerText = "👑 لوحة الشرف الكبرى 👑";
+            descEl.innerText = "تهانينا الحارة! لقد أكملت رحلتك التعليمية المتميزة وتستحق هذا الوسام المشرّف من  junior-preneur لذكائك البرمجي الباهر!";
+            
+            document.getElementById("grand-total-display").innerText = `${totalScore} نقطة`;
+            
+            if (totalScore >= 450) {
+                document.getElementById("grand-rating-text").innerText = "🥇 التقييم: عبقري البرمجة الصغير - تفكير خوارزمي فائق الكفاءة والسرعة!";
+            } else {
+                document.getElementById("grand-rating-text").innerText = "✨ التقييم: مبرمج متميز جداً - تمتلك مهارات منطقية واعدة ومستقبل باهر!";
+            }
+
+            mascotContainer.innerHTML = `<svg viewBox="0 0 100 100" class="w-full h-full"><circle cx="50" cy="50" r="45" fill="#fef3c7" /><path d="M50 15 L60 42 L88 42 L66 58 L74 85 L50 68 L26 85 L34 58 L12 42 L40 42 Z" fill="#fbbf24" stroke="#d97706" stroke-width="3" /><path d="M30 30 L40 45 L50 30 L60 45 L70 30 L65 52 L35 52 Z" fill="#f59e0b" /></svg>`;
+            document.getElementById("win-modal").classList.remove("hidden");
+        }
+
+        function restartWholeGame() {
+            closeWinModal();
+            unlockedLevels = { 1: true, 2: false, 3: false, 'sandbox': false };
+            scoresHistory = { 1: 0, 2: 0, 3: 0, 'sandbox': 0 };
+            totalScore = 0;
+            document.getElementById("total-score-display").innerText = "0";
+            updateLevelsLockUI();
+            changeLevel(1);
+        }
+
+        function triggerConfetti() {
+            const container = document.getElementById("confetti-container");
+            container.innerHTML = "";
+            const colors = ["#fbbf24", "#34d399", "#60a5fa", "#a78bfa", "#f472b6"];
+            for (let i = 0; i < 70; i++) {
+                const conf = document.createElement("div"); conf.className = "confetti";
+                conf.style.left = `${Math.random() * 100}vw`; conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                conf.style.animationDelay = `${Math.random() * 1.5}s`; conf.style.transform = `scale(${Math.random() * 0.7 + 0.3})`;
+                container.appendChild(conf);
+            }
+            setTimeout(() => { container.innerHTML = ""; }, 4500);
+        }
+    </script>
+</body>
+</html>
