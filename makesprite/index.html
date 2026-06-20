@@ -1,0 +1,1621 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>لعبة صديقي الـ Sprite</title>
+    <!-- استيراد مكتبة html2canvas لتحويل الساحة البرمجية إلى صورة بطاقة بريدية رائعة -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        /* استيراد خط كرتوني وواضح للأطفال */
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@700;800;900&display=swap');
+
+        :root {
+            --color-primary: #ff5a5f;      /* مرجاني زاهي */
+            --color-secondary: #00d1c4;    /* تيل مائي منعش */
+            --color-yellow: #ffdc00;       /* أصفر مشمس */
+            --color-dark: #2f2f2f;         /* لون الإطارات الكرتونية */
+            --color-bg: #fffbf0;           /* خلفية دافئة ومريحة */
+            --color-blue: #1a8fe3;         /* أزرق ساطع */
+            --color-green: #4caf50;        /* أخضر عشبي */
+            --color-card-bg: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            font-family: 'Cairo', sans-serif;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--color-bg);
+            /* نمط خلفية كرتوني خفيف ومبهج */
+            background-image: radial-gradient(var(--color-secondary) 15%, transparent 16%),
+                              radial-gradient(var(--color-yellow) 15%, transparent 16%);
+            background-size: 60px 60px;
+            background-position: 0 0, 30px 30px;
+            color: var(--color-dark);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding: 10px;
+        }
+
+        /* حاوية اللعبة الرئيسية بأسلوب كرتوني مجسم */
+        .game-container {
+            width: 100%;
+            max-width: 900px;
+            background: white;
+            border-radius: 35px;
+            box-shadow: 0px 16px 0px var(--color-dark), 0px 20px 30px rgba(0,0,0,0.15);
+            margin: 20px auto;
+            padding: 25px;
+            border: 6px solid var(--color-dark);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            transform: rotate(-0.5deg); /* ميلان كرتوني خفيف جداً للحيوية */
+        }
+
+        /* رأس الصفحة والمراحل */
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: var(--color-blue);
+            font-size: 38px;
+            margin: 0 0 10px 0;
+            text-shadow: 3px 3px 0px var(--color-yellow), -1px -1px 0px var(--color-dark), 1px -1px 0px var(--color-dark), -1px 1px 0px var(--color-dark), 1px 1px 0px var(--color-dark);
+            font-weight: 900;
+            letter-spacing: 1px;
+        }
+
+        /* شريط تقدم مبهج كرتوني */
+        .progress-bar {
+            display: flex;
+            justify-content: space-between;
+            background: #f0f0f0;
+            border-radius: 50px;
+            padding: 6px;
+            margin: 15px 0;
+            border: 4px solid var(--color-dark);
+            box-shadow: inset 0px 4px 0px rgba(0,0,0,0.1);
+            gap: 5px;
+        }
+
+        .progress-step {
+            flex: 1;
+            text-align: center;
+            padding: 10px 5px;
+            font-size: 15px;
+            font-weight: 800;
+            border-radius: 50px;
+            color: #777;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .progress-step.active {
+            background-color: var(--color-primary);
+            color: white;
+            border: 3px solid var(--color-dark);
+            box-shadow: 0px 4px 0px var(--color-dark);
+            transform: scale(1.05);
+        }
+
+        .progress-step.completed {
+            background-color: var(--color-secondary);
+            color: var(--color-dark);
+            border: 3px solid var(--color-dark);
+        }
+
+        /* الرسائل الإرشادية الكرتونية اللطيفة */
+        .guide-box {
+            background-color: #e3fcf7;
+            border: 4px solid var(--color-dark);
+            padding: 15px 60px 15px 20px;
+            border-radius: 25px;
+            font-size: 20px;
+            font-weight: 800;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            box-shadow: 4px 4px 0px var(--color-dark);
+            position: relative;
+            animation: bounceIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .guide-avatar {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 38px;
+        }
+
+        /* شاشات العمل والمشاهد ذات حواف كرتونية واضحة */
+        .scene-wrapper {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            border-radius: 25px;
+            overflow: hidden;
+            border: 5px solid var(--color-dark);
+            box-shadow: inset 0 10px 20px rgba(0,0,0,0.2), 0 8px 0 var(--color-dark);
+            transition: background 0.5s ease;
+        }
+
+        /* خلفيات المشاهد المتنوعة والزاهية */
+        .scene-bg-sea {
+            background: linear-gradient(180deg, #00f2fe 0%, #4facfe 100%);
+        }
+
+        .scene-bg-forest {
+            background: linear-gradient(180deg, #96e6a1 0%, #d4fc79 100%);
+        }
+
+        .scene-bg-home {
+            background: linear-gradient(180deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
+        }
+
+        /* فقاعات ماء عائمة بمظهر زاهي للمشهد البحري */
+        .sea-bubbles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            background-image: 
+                radial-gradient(circle, rgba(255,255,255,0.3) 8%, transparent 8%),
+                radial-gradient(circle, rgba(255,255,255,0.2) 15%, transparent 15%);
+            background-size: 60px 60px, 100px 100px;
+            background-position: 0 0, 30px 50px;
+            animation: floatBubbles 10s linear infinite;
+        }
+
+        /* تصنيف وتوزيع المراحل */
+        .stage {
+            display: none;
+            width: 100%;
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        .stage.active {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* منطقة التخصيص والأزرار */
+        .controls-area {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        /* لوحة الشخصيات المحدثة لحل مشكلة التداخل والخروج من المربعات */
+        .character-palette {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            width: 100%;
+            padding: 15px;
+            flex-wrap: wrap;
+        }
+
+        .char-card {
+            background: white;
+            border: 4px solid var(--color-dark);
+            border-radius: 25px;
+            padding: 10px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            width: 130px;  /* زيادة العرض ليتسع بشكل كامل */
+            height: 145px; /* زيادة الارتفاع ليتسع بشكل كامل */
+            box-shadow: 4px 4px 0px var(--color-dark);
+            position: relative;
+        }
+
+        .char-card span {
+            font-size: 65px; /* الحجم المناسب للـ Emoji */
+            line-height: 1;
+            margin-top: 5px;
+            transition: transform 0.2s ease;
+        }
+
+        .char-card:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 6px 8px 0px var(--color-dark);
+            background-color: #fffde6;
+        }
+
+        .char-card:hover span {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        .char-card.selected {
+            border-color: var(--color-primary);
+            background-color: #ffeef0;
+            box-shadow: 4px 4px 0px var(--color-primary);
+        }
+
+        .char-card.selected .char-name {
+            color: var(--color-primary);
+        }
+
+        .char-name {
+            font-size: 16px;
+            font-weight: 800;
+            margin-top: auto;
+            margin-bottom: 5px;
+            color: var(--color-dark);
+            text-align: center;
+            width: 100%;
+            white-space: nowrap;
+        }
+
+        /* الأزرار التفاعلية الكبيرة والزاهية (3D Cartoon Style) */
+        .btn-large {
+            background-color: var(--color-green);
+            color: white;
+            border: 4px solid var(--color-dark);
+            border-radius: 50px;
+            padding: 15px 45px;
+            font-size: 22px;
+            font-weight: 900;
+            cursor: pointer;
+            box-shadow: 0px 8px 0px var(--color-dark);
+            transition: all 0.1s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            text-shadow: 1px 1px 0px rgba(0,0,0,0.2);
+        }
+
+        .btn-large:hover {
+            transform: translateY(2px);
+            box-shadow: 0px 6px 0px var(--color-dark);
+            background-color: #66bb6a;
+        }
+
+        .btn-large:active {
+            transform: translateY(8px);
+            box-shadow: 0px 0px 0px var(--color-dark);
+        }
+
+        .btn-next {
+            background-color: var(--color-primary);
+        }
+
+        .btn-next:hover {
+            background-color: #ff787c;
+        }
+
+        /* أدوات تعديل الحجم الكرتونية الزاهية */
+        .size-control {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+            background: #fff;
+            border: 4px solid var(--color-dark);
+            padding: 10px 30px;
+            border-radius: 50px;
+            box-shadow: 5px 5px 0px var(--color-dark);
+        }
+
+        .btn-circle {
+            background-color: var(--color-yellow);
+            color: var(--color-dark);
+            border: 4px solid var(--color-dark);
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            font-size: 30px;
+            font-weight: 900;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0px 4px 0px var(--color-dark);
+            transition: all 0.1s;
+        }
+
+        .btn-circle:hover {
+            background-color: #fff176;
+            transform: translateY(1px);
+            box-shadow: 0px 3px 0px var(--color-dark);
+        }
+
+        .btn-circle:active {
+            transform: translateY(4px);
+            box-shadow: 0px 0px 0px var(--color-dark);
+        }
+
+        .size-val {
+            font-size: 32px;
+            font-weight: 900;
+            min-width: 80px;
+            text-align: center;
+            color: var(--color-blue);
+            text-shadow: 1px 1px 0px rgba(0,0,0,0.05);
+        }
+
+        /* كائنات الـ Sprite داخل المشهد */
+        .sprite-container {
+            position: absolute;
+            touch-action: none;
+            cursor: grab;
+            display: inline-block;
+        }
+
+        .sprite-container:active {
+            cursor: grabbing;
+        }
+
+        /* تحديد كرتوني رائع للـ Sprite النشط حالياً للتعديل */
+        .sprite-container.active-sprite::after {
+            content: '';
+            position: absolute;
+            top: -15px;
+            left: -15px;
+            right: -15px;
+            bottom: -15px;
+            border: 4px dashed var(--color-yellow);
+            border-radius: 50%;
+            animation: rotateDash 6s linear infinite;
+            pointer-events: none;
+            background: rgba(255, 220, 0, 0.08);
+        }
+
+        .sprite-scaler {
+            display: inline-block;
+            transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-origin: center;
+        }
+
+        .sprite-element {
+            font-size: 85px;
+            display: inline-block;
+            transform-origin: center;
+            line-height: 1;
+            filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.15));
+        }
+
+        /* الحركات والسلوكيات النشطة */
+        .behavior-spin {
+            animation: spinAction 3.5s linear infinite;
+        }
+
+        .behavior-wobble {
+            animation: wobbleAction 0.6s ease-in-out infinite alternate;
+        }
+
+        .behavior-slide {
+            animation: slideAction 3.2s ease-in-out infinite alternate;
+        }
+
+        .behavior-right {
+            animation: rightAction 4.5s linear infinite;
+        }
+
+        /* أزرار اختيار السلوك الملونة للأطفال */
+        .behavior-btn-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            width: 100%;
+            max-width: 650px;
+        }
+
+        .behavior-btn {
+            background-color: white;
+            border: 4px solid var(--color-dark);
+            border-radius: 25px;
+            padding: 15px;
+            font-size: 20px;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            box-shadow: 4px 4px 0px var(--color-dark);
+            transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .behavior-btn span {
+            font-size: 28px;
+        }
+
+        .behavior-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 5px 7px 0px var(--color-dark);
+            background-color: #f6fdfd;
+        }
+
+        .behavior-btn:active, .behavior-btn.selected {
+            transform: translateY(4px);
+            box-shadow: 0px 0px 0px var(--color-dark);
+            background-color: var(--color-yellow);
+            border-color: var(--color-dark);
+        }
+
+        /* بطاقات اختيار الخلفية اللطيفة والمجسمة */
+        .theme-grid {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            width: 100%;
+            margin-bottom: 25px;
+        }
+
+        .theme-card {
+            background: white;
+            border: 4px solid var(--color-dark);
+            border-radius: 25px;
+            padding: 12px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            width: 130px;
+            box-shadow: 4px 4px 0px var(--color-dark);
+        }
+
+        .theme-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 5px 7px 0px var(--color-dark);
+        }
+
+        .theme-card:active, .theme-card.selected {
+            transform: translateY(4px);
+            box-shadow: 0px 0px 0px var(--color-dark);
+            background-color: var(--color-yellow);
+        }
+
+        .theme-emoji {
+            font-size: 45px;
+            margin-bottom: 5px;
+        }
+
+        .theme-title {
+            font-weight: 800;
+            font-size: 18px;
+            color: var(--color-dark);
+        }
+
+        /* لوحة تحكم سحرية متقدمة للمرحلة 5 */
+        .customizer-panel {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            background: #fffdf0;
+            border: 4px solid var(--color-dark);
+            border-radius: 25px;
+            padding: 20px;
+            margin-top: 20px;
+            gap: 15px;
+            box-shadow: 5px 5px 0px var(--color-dark);
+        }
+
+        .panel-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        /* نافذة رسائل تنبيه مخصصة للأطفال ومبهجة لمنع استخدام alert() */
+        .custom-popup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+        }
+
+        .popup-content {
+            background: white;
+            border: 5px solid var(--color-dark);
+            border-radius: 30px;
+            padding: 25px;
+            max-width: 450px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0px 12px 0px var(--color-dark);
+            animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .popup-emoji {
+            font-size: 70px;
+            margin-bottom: 10px;
+            animation: pulse 1.5s infinite;
+        }
+
+        .popup-title {
+            font-size: 24px;
+            font-weight: 900;
+            color: var(--color-primary);
+            margin-bottom: 10px;
+        }
+
+        .popup-text {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--color-dark);
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        /* شاشة الاحتفال الرائعة والنهائية */
+        .celebration-screen {
+            display: none;
+            text-align: center;
+            padding: 30px;
+            animation: zoomIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        .celebration-screen.active {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .badge {
+            font-size: 120px;
+            margin-bottom: 25px;
+            animation: pulse 1.5s infinite;
+            filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.1));
+        }
+
+        .final-msg {
+            background-color: #fffdeb;
+            border: 4px solid var(--color-dark);
+            border-radius: 25px;
+            padding: 30px;
+            font-size: 22px;
+            line-height: 1.8;
+            max-width: 650px;
+            margin-bottom: 30px;
+            text-align: right;
+            box-shadow: 6px 6px 0px var(--color-dark);
+        }
+
+        .final-point {
+            margin: 12px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 800;
+        }
+
+        /* نجوم الاحتفال التفاعلية */
+        .star-particle {
+            position: absolute;
+            pointer-events: none;
+            font-size: 30px;
+            animation: shootStar 1.5s ease-out forwards;
+            z-index: 10;
+        }
+
+        /* الحركات والتحريك CSS Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.08); }
+            70% { transform: scale(0.92); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes zoomIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15) rotate(3deg); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes floatBubbles {
+            0% { background-position: 0 0, 30px 50px; }
+            100% { background-position: 0 -1000px, 30px -1000px; }
+        }
+
+        @keyframes rotateDash {
+            to { transform: rotate(360deg); }
+        }
+
+        /* سلوكيات وحركات الـ Sprite */
+        @keyframes spinAction {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes wobbleAction {
+            from { transform: rotate(-15deg); }
+            to { transform: rotate(15deg); }
+        }
+
+        @keyframes slideAction {
+            from { transform: translateX(-40px); }
+            to { transform: translateX(40px); }
+        }
+
+        @keyframes rightAction {
+            0% { transform: translateX(-80px); }
+            100% { transform: translateX(950px); }
+        }
+
+        @keyframes shootStar {
+            0% { transform: translate(0, 0) scale(1.2) rotate(0deg); opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(0) rotate(360deg); opacity: 0; }
+        }
+
+        /* ملاءمة تامة ومحسنة للهواتف الذكية والأجهزة اللوحية */
+        @media (max-width: 600px) {
+            h1 { font-size: 28px; }
+            .game-container { margin: 5px; padding: 15px; border-radius: 25px; border-width: 4px; box-shadow: 0px 10px 0px var(--color-dark); }
+            .scene-wrapper { height: 320px; border-radius: 20px; }
+            .char-card { width: 105px; height: 120px; padding: 5px; }
+            .char-card span { font-size: 45px; }
+            .char-name { font-size: 14px; }
+            .btn-large { padding: 12px 30px; font-size: 18px; box-shadow: 0px 5px 0px var(--color-dark); }
+            .guide-box { font-size: 17px; padding: 12px 50px 12px 15px; }
+            .guide-avatar { right: 10px; font-size: 30px; }
+            .sprite-element { font-size: 65px; }
+            .behavior-btn-grid { grid-template-columns: 1fr; }
+            .theme-grid { flex-wrap: wrap; gap: 8px; }
+            .theme-card { width: 95px; padding: 8px; border-radius: 18px; }
+            .theme-emoji { font-size: 32px; }
+            .theme-title { font-size: 14px; }
+            .btn-circle { width: 45px; height: 45px; font-size: 22px; }
+            .size-val { font-size: 24px; min-width: 60px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <!-- رأس الصفحة والمراحل التفاعلية -->
+        <div class="header" id="game-header">
+            <h1>صديقي الـ Sprite 🐠</h1>
+            <div class="progress-bar">
+                <div class="progress-step active" id="step-1">1. اختر البطل</div>
+                <div class="progress-step" id="step-2">2. ثبّت مكانه</div>
+                <div class="progress-step" id="step-3">3. غير حجمه</div>
+                <div class="progress-step" id="step-4">4. حرك بطلنا</div>
+                <div class="progress-step" id="step-5">5. اصنع مشهدك</div>
+            </div>
+        </div>
+
+        <!-- ================= المرحلة 1 ================= -->
+        <div id="stage-1" class="stage active">
+            <div class="guide-box">
+                <span class="guide-avatar">💬</span>
+                البحر يحتاج إلى بطل جديد! اختر شخصية لتكون صديقتنا الرائعة في اللعبة.
+            </div>
+            
+            <div class="scene-wrapper scene-bg-sea">
+                <div class="sea-bubbles"></div>
+                <!-- مكان معاينة الكائن المختار -->
+                <div id="lvl1-character-area" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); pointer-events: none;"></div>
+            </div>
+
+            <!-- بطاقات شخصيات المرحلة الأولى -->
+            <div class="character-palette">
+                <div class="char-card" id="card-yellow-fish" onclick="selectFirstCharacter('🐠', 'سمكة صفراء', 'card-yellow-fish')">
+                    <span>🐠</span>
+                    <div class="char-name">سمكة صفراء</div>
+                </div>
+                <div class="char-card" id="card-blue-fish" onclick="selectFirstCharacter('🐟', 'سمكة زرقاء', 'card-blue-fish')">
+                    <span>🐟</span>
+                    <div class="char-name">سمكة زرقاء</div>
+                </div>
+                <div class="char-card" id="card-octopus" onclick="selectFirstCharacter('🐙', 'أخطبوط', 'card-octopus')">
+                    <span>🐙</span>
+                    <div class="char-name">أخطبوط</div>
+                </div>
+                <div class="char-card" id="card-crab" onclick="selectFirstCharacter('🦀', 'سرطان بحر', 'card-crab')">
+                    <span>🦀</span>
+                    <div class="char-name">سرطان البحر</div>
+                </div>
+            </div>
+
+            <div class="controls-area" id="lvl1-controls" style="display: none;">
+                <button class="btn-large btn-next" onclick="goToStage(2)">التالي ✨</button>
+            </div>
+        </div>
+
+        <!-- ================= المرحلة 2 ================= -->
+        <div id="stage-2" class="stage">
+            <div class="guide-box">
+                <span class="guide-avatar">💬</span>
+                رائع! الآن ضع شخصيتك في المكان الذي تريده داخل البحر بسحبها بأصبعك أو بالفأرة.
+            </div>
+            
+            <div class="scene-wrapper scene-bg-sea" id="lvl2-scene-container">
+                <div class="sea-bubbles"></div>
+                <!-- الكائن القابل للسحب -->
+                <div id="lvl2-sprite" class="sprite-container" style="left: 42%; top: 35%;">
+                    <div class="sprite-scaler">
+                        <div class="sprite-element" id="lvl2-sprite-emoji">🐠</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls-area">
+                <button class="btn-large" onclick="lockPosition()">ثبّت المكان 📍</button>
+            </div>
+        </div>
+
+        <!-- ================= المرحلة 3 ================= -->
+        <div id="stage-3" class="stage">
+            <div class="guide-box">
+                <span class="guide-avatar">💬</span>
+                شخصيتك جاهزة! هل تريد تغيير حجمها؟ استخدم زري (+) و (-) للتحكم بحجمها بمقدار 10 درجات.
+            </div>
+            
+            <div class="scene-wrapper scene-bg-sea">
+                <div class="sea-bubbles"></div>
+                <div id="lvl3-sprite" class="sprite-container">
+                    <div class="sprite-scaler" id="lvl3-scaler">
+                        <div class="sprite-element" id="lvl3-sprite-emoji">🐠</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls-area" style="flex-direction: column; align-items: center; gap: 20px;">
+                <div class="size-control">
+                    <button class="btn-circle" onclick="changeSize(-10)">-</button>
+                    <span class="size-val" id="size-val-display">100%</span>
+                    <button class="btn-circle" onclick="changeSize(10)">+</button>
+                </div>
+                <button class="btn-large btn-next" onclick="lockSize()">موافق 👍</button>
+            </div>
+        </div>
+
+        <!-- ================= المرحلة 4 ================= -->
+        <div id="stage-4" class="stage">
+            <div class="guide-box">
+                <span class="guide-avatar">💬</span>
+                الآن دعنا نجعل شخصيتك أكثر نشاطًا! اختر حركة واحدة ممتعة لها لتبدأ بها فوراً.
+            </div>
+            
+            <div class="scene-wrapper scene-bg-sea" style="overflow: hidden;">
+                <div class="sea-bubbles"></div>
+                <div id="lvl4-sprite" class="sprite-container">
+                    <div class="sprite-scaler" id="lvl4-scaler">
+                        <div class="sprite-element" id="lvl4-sprite-emoji">🐠</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls-area" style="flex-direction: column; align-items: center; gap: 20px;">
+                <div class="behavior-btn-grid">
+                    <button class="behavior-btn" id="beh-spin" onclick="applyBehavior('behavior-spin')">
+                        <span>🔄</span> تدور حول نفسها
+                    </button>
+                    <button class="behavior-btn" id="beh-slide" onclick="applyBehavior('behavior-slide')">
+                        <span>⬅️➡️</span> تتحرك يمينًا ويسارًا
+                    </button>
+                    <button class="behavior-btn" id="beh-wobble" onclick="applyBehavior('behavior-wobble')">
+                        <span>✨</span> ترتعش بلطف
+                    </button>
+                    <button class="behavior-btn" id="beh-right" onclick="applyBehavior('behavior-right')">
+                        <span>➡️</span> تتحرك باستمرار نحو اليمين
+                    </button>
+                </div>
+                <button class="btn-large btn-next" id="lvl4-next-btn" style="display: none; margin-top: 10px;" onclick="goToStage(5)">التالي 🚀</button>
+            </div>
+        </div>
+
+        <!-- ================= المرحلة 5 ================= -->
+        <div id="stage-5" class="stage">
+            <div class="guide-box">
+                <span class="guide-avatar">💬</span>
+                ممتاز! الآن لنصنع مشهداً خاصاً بك. عند تغيير الخلفية، يمكنك إضافة كائنات جديدة وتصميم عالمك الخاص!
+            </div>
+
+            <!-- بطاقات اختيار بيئة المشهد -->
+            <div class="theme-grid">
+                <div class="theme-card selected" id="theme-sea" onclick="changePlaygroundTheme('sea')">
+                    <div class="theme-emoji">🌊</div>
+                    <div class="theme-title">البحر</div>
+                </div>
+                <div class="theme-card" id="theme-forest" onclick="changePlaygroundTheme('forest')">
+                    <div class="theme-emoji">🌳</div>
+                    <div class="theme-title">الغابة</div>
+                </div>
+                <div class="theme-card" id="theme-home" onclick="changePlaygroundTheme('home')">
+                    <div class="theme-emoji">🏠</div>
+                    <div class="theme-title">المنزل</div>
+                </div>
+            </div>
+            
+            <div class="scene-wrapper scene-bg-sea" id="playground-scene">
+                <!-- ستظهر الكائنات المضافة هنا بشكل ديناميكي -->
+                <div class="sea-bubbles" id="playground-sea-decoration"></div>
+            </div>
+
+            <!-- لوحة التحكم وتخصيص الكائنات المتعددة في المشهد الحر -->
+            <div class="customizer-panel">
+                <div class="panel-row">
+                    <strong style="color: var(--color-blue); font-size: 18px;">اضغط على كائن لإضافته (أقصى حد: 6):</strong>
+                    <div class="character-palette" id="playground-palette" style="padding:0; gap: 10px; justify-content: flex-start; width: auto; overflow-x: auto;">
+                        <!-- يتم تغذية الأشكال المتاحة ديناميكياً هنا حسب الخلفية -->
+                    </div>
+                </div>
+
+                <!-- خيارات تعديل الكائن المحدد داخل ساحة اللعب -->
+                <div id="playground-sprite-controls" style="display:none; border-top: 3px dashed #ccc; padding-top: 15px; margin-top: 5px;">
+                    <span style="font-weight: 800; color: var(--color-primary); font-size: 17px;">تعديل الكائن الذي حددته:</span>
+                    <div class="panel-row" style="margin-top: 10px;">
+                        <!-- تعديل الحجم للـ Sprite المختار بمعدل 10 درجات -->
+                        <div class="size-control" style="padding: 5px 15px; border-width: 3px; box-shadow: none;">
+                            <button class="btn-circle" style="width:38px; height:38px; font-size:20px; box-shadow: 0 2px 0 var(--color-dark);" onclick="changePlaygroundSpriteSize(-10)">-</button>
+                            <span class="size-val" style="font-size: 20px;" id="pg-size-display">100%</span>
+                            <button class="btn-circle" style="width:38px; height:38px; font-size:20px; box-shadow: 0 2px 0 var(--color-dark);" onclick="changePlaygroundSpriteSize(10)">+</button>
+                        </div>
+
+                        <!-- الحركات المتاحة للكائن المختار -->
+                        <div style="display:flex; flex-wrap: wrap; gap: 8px;">
+                            <button class="behavior-btn" style="padding: 8px 12px; font-size: 14px; border-width: 3px; box-shadow: none; border-radius: 15px;" onclick="applyPlaygroundBehavior('behavior-spin')">🔄 تدور</button>
+                            <button class="behavior-btn" style="padding: 8px 12px; font-size: 14px; border-width: 3px; box-shadow: none; border-radius: 15px;" onclick="applyPlaygroundBehavior('behavior-slide')">⬅️➡️ يمين/يسار</button>
+                            <button class="behavior-btn" style="padding: 8px 12px; font-size: 14px; border-width: 3px; box-shadow: none; border-radius: 15px;" onclick="applyPlaygroundBehavior('behavior-wobble')">✨ ترتعش</button>
+                            <button class="behavior-btn" style="padding: 8px 12px; font-size: 14px; border-width: 3px; box-shadow: none; border-radius: 15px;" onclick="applyPlaygroundBehavior('behavior-right')">➡️ تتحرك</button>
+                        </div>
+
+                        <!-- زر حذف الكائن المحدد -->
+                        <button class="btn-circle" style="background: var(--color-primary); color: white; width:42px; height:42px; font-size: 18px; box-shadow: 0 2px 0 var(--color-dark);" onclick="deleteActiveSprite()" title="احذف الكائن">🗑️</button>
+                    </div>
+                </div>
+            </div> <!-- نهاية .customizer-panel -->
+
+            <div class="controls-area">
+                <button class="btn-large btn-next" onclick="finishGame()">انتهيت من المشهد 🎉</button>
+            </div>
+        </div> <!-- نهاية المرحلة 5 -->
+
+        <!-- ================= شاشة الاحتفال والمفاهيم النهائية ================= -->
+        <div class="celebration-screen" id="celebration-screen">
+            <div class="badge">🏆</div>
+            <h1 style="color: var(--color-primary); font-size: 38px; margin-bottom: 20px;">أحسنت يا بطل! 🌟</h1>
+            
+            <div class="final-msg">
+                لقد أنشأت مشهداً مذهلاً باستخدام شخصيات متعددة!
+                <br>كل شخصية في اللعبة تسمى <strong>Sprite</strong>.
+                <br>ويمكن لكل <strong>Sprite</strong> أن تمتلك:
+                <div class="final-point">📍 <strong>مكاناً خاصاً بها:</strong> قمت بتحديده في المشهد بسحبها (Position).</div>
+                <div class="final-point">📏 <strong>حجماً مختلفاً:</strong> قمت بتعديله بـ (+) و (-) لتناسب مشهدك (Size).</div>
+                <div class="final-point">🎭 <strong>حركة أو سلوكاً خاصاً بها:</strong> جعلتها تتحرك وتدور بمتعة (Behavior).</div>
+                <strong>أنت الآن جاهز تماماً لتعلم الـ Sprite في البرمجة والبدء بإنشاء ألعابك! 🚀</strong>
+            </div>
+
+            <!-- الزر لعرض وتحميل الصورة للمجموعة -->
+            <button class="btn-large" onclick="showCapturedScene()" style="background-color: var(--color-blue); margin-bottom: 15px; box-shadow: 0px 8px 0px #0d5ea1;">انظر لمشهدك وأرسله للمجموعة 📸</button>
+
+            <button class="btn-large" onclick="restartGame()">العب من جديد 🔄</button>
+        </div>
+    </div>
+
+    <!-- نافذة منبثقة كرتونية لعرض صورة مشهد الطفل المبدع -->
+    <div class="custom-popup" id="scene-preview-popup">
+        <div class="popup-content" style="max-width: 600px; border-color: var(--color-secondary);">
+            <div class="popup-emoji">🖼️</div>
+            <div class="popup-title">مشهدك الإبداعي!</div>
+            <p class="popup-text">انقر على زر "تحميل الصورة" لحفظها على جهازك ومشاركتها فوراً مع أصدقائك في المجموعة! ✨</p>
+            
+            <!-- حاوية المعاينة السحرية للمشهد -->
+            <div id="captured-image-container" style="border: 5px solid var(--color-dark); border-radius: 20px; overflow: hidden; margin-bottom: 20px; background: white; box-shadow: 6px 6px 0px var(--color-dark);">
+                <!-- سيتم وضع الصورة الملتقطة هنا ديناميكياً -->
+            </div>
+
+            <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                <button class="btn-large" onclick="downloadSceneImage()" style="background-color: var(--color-green); padding: 10px 30px; font-size: 18px; box-shadow: 0 4px 0 var(--color-dark);">تحميل الصورة 📥</button>
+                <button class="btn-large btn-next" onclick="closeScenePreview()" style="padding: 10px 30px; font-size: 18px; box-shadow: 0 4px 0 var(--color-dark);">رجوع 🔙</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة رسالة تنبيه كرتونية جذابة للأطفال لمنع استخدام alert -->
+    <div class="custom-popup" id="custom-alert">
+        <div class="popup-content">
+            <div class="popup-emoji">⚠️</div>
+            <div class="popup-title" id="alert-title">تنبيه!</div>
+            <div class="popup-text" id="alert-text">لقد وصلت للحد الأقصى المسموح به.</div>
+            <button class="btn-large btn-next" style="padding: 10px 30px; font-size: 18px; box-shadow: 0 4px 0 var(--color-dark);" onclick="closeAlert()">موافق</button>
+        </div>
+    </div>
+
+    <script>
+        // حالة وحالة كائنات اللعبة بالكامل
+        const gameState = {
+            activeStage: 1,
+            selectedCharEmoji: '🐠',
+            selectedCharName: 'سمكة صفراء',
+            positionX: '42%',
+            positionY: '35%',
+            size: 100,
+            behavior: '',
+            playgroundTheme: 'sea',
+            playgroundSprites: [], 
+            activePlaygroundSprite: null,
+            capturedImage: null // مخزن لحفظ لقطة الشاشة للمشهد المصمم
+        };
+
+        // الكائنات المتاحة لكل مظهر من المظاهر في المرحلة الخامسة
+        const themesData = {
+            sea: [
+                { emoji: '🐠', name: 'سمكة' },
+                { emoji: '🐙', name: 'أخطبوط' },
+                { emoji: '🦀', name: 'سرطان بحر' },
+                { emoji: '⭐', name: 'نجم البحر' }
+            ],
+            forest: [
+                { emoji: '🐰', name: 'أرنب' },
+                { emoji: '🦊', name: 'ثعلب' },
+                { emoji: '🦉', name: 'بومة' },
+                { emoji: '🌳', name: 'شجرة' }
+            ],
+            home: [
+                { emoji: '🐱', name: 'قطة' },
+                { emoji: '🐶', name: 'كلب' },
+                { emoji: '🪑', name: 'كرسي' },
+                { emoji: '🛋️', name: 'أريكة' }
+            ]
+        };
+
+        // نظام المؤثرات الصوتية (Web Audio API)
+        let audioCtx = null;
+        function playSound(type) {
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                const now = audioCtx.currentTime;
+
+                if (type === 'click') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(450, now);
+                    osc.frequency.exponentialRampToValueAtTime(900, now + 0.1);
+                    gain.gain.setValueAtTime(0.12, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                } else if (type === 'pop') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(280, now);
+                    osc.frequency.exponentialRampToValueAtTime(650, now + 0.15);
+                    gain.gain.setValueAtTime(0.18, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                    osc.start(now);
+                    osc.stop(now + 0.15);
+                } else if (type === 'fanfare') {
+                    const notes = [261.63, 329.63, 392.00, 523.25, 659.25];
+                    notes.forEach((freq, idx) => {
+                        const noteOsc = audioCtx.createOscillator();
+                        const noteGain = audioCtx.createGain();
+                        noteOsc.connect(noteGain);
+                        noteGain.connect(audioCtx.destination);
+                        noteOsc.type = 'triangle';
+                        noteOsc.frequency.setValueAtTime(freq, now + idx * 0.1);
+                        noteGain.gain.setValueAtTime(0.12, now + idx * 0.1);
+                        noteGain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.1 + 0.18);
+                        noteOsc.start(now + idx * 0.1);
+                        noteOsc.stop(now + idx * 0.1 + 0.2);
+                    });
+                }
+            } catch (e) {
+                console.log("Audio API issue.");
+            }
+        }
+
+        // إطلاق نافذة التنبيه المخصصة للأطفال
+        function showAlert(title, message, emoji = '⚠️') {
+            document.getElementById('alert-title').innerText = title;
+            document.getElementById('alert-text').innerText = message;
+            document.querySelector('.popup-emoji').innerText = emoji;
+            document.getElementById('custom-alert').style.display = 'flex';
+        }
+
+        function closeAlert() {
+            playSound('click');
+            document.getElementById('custom-alert').style.display = 'none';
+        }
+
+        // إعدادات البداية عند تشغيل اللعبة
+        window.addEventListener('DOMContentLoaded', () => {
+            setupDragAndDrop();
+            initPlaygroundPalette();
+        });
+
+        // المرحلة 1: اختيار البطل الأول
+        function selectFirstCharacter(emoji, name, cardId) {
+            playSound('click');
+            gameState.selectedCharEmoji = emoji;
+            gameState.selectedCharName = name;
+
+            // تمييز البطاقة المحددة وإلغاء الأخريات
+            const cards = document.querySelectorAll('#stage-1 .char-card');
+            cards.forEach(card => card.classList.remove('selected'));
+            document.getElementById(cardId).classList.add('selected');
+
+            // إظهار البطل المحدد في وسط المشهد البحري
+            const container = document.getElementById('lvl1-character-area');
+            container.innerHTML = `
+                <div class="sprite-scaler" style="animation: pulse 1s infinite alternate">
+                    <div class="sprite-element">${emoji}</div>
+                </div>
+            `;
+            container.style.display = 'block';
+
+            // إظهار زر "التالي"
+            document.getElementById('lvl1-controls').style.display = 'flex';
+        }
+
+        // نظام التنقل السلس والكرتوني بين المراحل
+        function goToStage(stageNum) {
+            playSound('pop');
+            // إخفاء المرحلة الحالية
+            document.getElementById(`stage-${gameState.activeStage}`).classList.remove('active');
+            
+            // تحديث مؤشر التقدم العلوي
+            if (stageNum <= 5) {
+                document.getElementById(`step-${gameState.activeStage}`).classList.remove('active');
+                document.getElementById(`step-${gameState.activeStage}`).classList.add('completed');
+                document.getElementById(`step-${stageNum}`).classList.add('active');
+            }
+
+            gameState.activeStage = stageNum;
+
+            // عرض المرحلة المحددة مع التحريك
+            const nextStageElem = document.getElementById(`stage-${stageNum}`);
+            if (nextStageElem) {
+                nextStageElem.classList.add('active');
+            }
+
+            // تفعيل المشهد المناسب
+            if (stageNum === 2) {
+                setupStage2();
+            } else if (stageNum === 3) {
+                setupStage3();
+            } else if (stageNum === 4) {
+                setupStage4();
+            } else if (stageNum === 5) {
+                setupStage5();
+            }
+        }
+
+        // المرحلة 2: تحديد موقع صديقنا الـ Sprite
+        function setupStage2() {
+            document.getElementById('lvl2-sprite-emoji').innerText = gameState.selectedCharEmoji;
+            const sprite = document.getElementById('lvl2-sprite');
+            sprite.style.left = '42%';
+            sprite.style.top = '35%';
+        }
+
+        function lockPosition() {
+            playSound('click');
+            const sprite = document.getElementById('lvl2-sprite');
+            const container = document.getElementById('lvl2-scene-container');
+            const rect = container.getBoundingClientRect();
+            
+            // حفظ الموضع بنسبة مئوية لضمان ثباته مع كل أحجام الشاشات
+            const xPercent = (sprite.offsetLeft / rect.width) * 100;
+            const yPercent = (sprite.offsetTop / rect.height) * 100;
+
+            gameState.positionX = `${xPercent}%`;
+            gameState.positionY = `${yPercent}%`;
+
+            goToStage(3);
+        }
+
+        // المرحلة 3: تعديل حجم الـ Sprite (تغيير الحجم بمقدار 10)
+        function setupStage3() {
+            document.getElementById('lvl3-sprite-emoji').innerText = gameState.selectedCharEmoji;
+            const sprite = document.getElementById('lvl3-sprite');
+            sprite.style.left = gameState.positionX;
+            sprite.style.top = gameState.positionY;
+            
+            gameState.size = 100; // القيمة الافتراضية للحجم
+            updateSizeDisplay();
+        }
+
+        function changeSize(delta) {
+            playSound('click');
+            let newSize = gameState.size + delta; // الآن القيمة تعدل بمقدار 10 أو -10
+            
+            // التحقق من الحدود الدنيا والقصوى
+            if (newSize < 40) newSize = 40;
+            if (newSize > 200) newSize = 200;
+
+            gameState.size = newSize;
+            updateSizeDisplay();
+        }
+
+        function updateSizeDisplay() {
+            document.getElementById('size-val-display').innerText = `${gameState.size}%`;
+            const scaler = document.getElementById('lvl3-scaler');
+            scaler.style.transform = `scale(${gameState.size / 100})`;
+        }
+
+        function lockSize() {
+            goToStage(4);
+        }
+
+        // المرحلة 4: منح الكائن سلوكاً أو حركة (Behavior)
+        function setupStage4() {
+            document.getElementById('lvl4-sprite-emoji').innerText = gameState.selectedCharEmoji;
+            const sprite = document.getElementById('lvl4-sprite');
+            sprite.style.left = gameState.positionX;
+            sprite.style.top = gameState.positionY;
+
+            const scaler = document.getElementById('lvl4-scaler');
+            scaler.style.transform = `scale(${gameState.size / 100})`;
+
+            // تصفير الحركات السابقة
+            const element = document.getElementById('lvl4-sprite-emoji');
+            element.className = 'sprite-element';
+        }
+
+        function applyBehavior(behaviorClass) {
+            playSound('pop');
+            gameState.behavior = behaviorClass;
+
+            const element = document.getElementById('lvl4-sprite-emoji');
+            element.className = 'sprite-element ' + behaviorClass;
+
+            // تحديد الزر المناسب
+            const btns = document.querySelectorAll('.behavior-btn-grid .behavior-btn');
+            btns.forEach(btn => {
+                if (btn.id === 'beh-' + behaviorClass.split('-')[1]) {
+                    btn.classList.add('selected');
+                } else {
+                    btn.classList.remove('selected');
+                }
+            });
+
+            document.getElementById('lvl4-next-btn').style.display = 'block';
+        }
+
+        // المرحلة 5: الساحة الحرة لتصميم المشهد المبتكر
+        function setupStage5() {
+            // البداية دائماً فارغة بدون كائنات مسبقة لتفادي بقاء السمكة السابقة في غير مكانها
+            gameState.playgroundSprites = [];
+            gameState.activePlaygroundSprite = null;
+            
+            renderPlaygroundSprites();
+            changePlaygroundTheme('sea'); // المظهر الافتراضي البادئ هو البحر
+        }
+
+        // تغيير المظهر وإزالة الكائنات السابقة لتمكين الطفل من بناء مظهر متناسق بالكامل
+        function changePlaygroundTheme(themeName) {
+            playSound('pop');
+            gameState.playgroundTheme = themeName;
+
+            // عند اختيار مظهر جديد، تختفي الكائنات السابقة بالكامل لتبدأ من جديد
+            gameState.playgroundSprites = [];
+            gameState.activePlaygroundSprite = null;
+
+            // تحديث تمييز أزرار المظهر
+            const cards = document.querySelectorAll('.theme-card');
+            cards.forEach(card => {
+                if (card.id === `theme-${themeName}`) {
+                    card.classList.add('selected');
+                } else {
+                    card.classList.remove('selected');
+                }
+            });
+
+            // تحديث وتلوين الخلفية
+            const scene = document.getElementById('playground-scene');
+            scene.className = `scene-wrapper scene-bg-${themeName}`;
+
+            // تفعيل ديكورات فقاعات الماء فقط إذا كان المظهر المختار هو البحر
+            const dec = document.getElementById('playground-sea-decoration');
+            if (themeName === 'sea') {
+                dec.style.display = 'block';
+            } else {
+                dec.style.display = 'none';
+            }
+
+            // تحديث لوحة الأدوات والكائنات المتاحة لتناسب البيئة الحالية (بحر، غابة، منزل)
+            initPlaygroundPalette();
+            
+            // إعادة رسم الساحة والتخصيص
+            renderPlaygroundSprites();
+            document.getElementById('playground-sprite-controls').style.display = 'none';
+        }
+
+        // تعبئة لوحة اختيار الشخصيات المتاحة بناءً على البيئة المختارة
+        function initPlaygroundPalette() {
+            const palette = document.getElementById('playground-palette');
+            palette.innerHTML = '';
+
+            const items = themesData[gameState.playgroundTheme];
+            items.forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'char-card';
+                itemDiv.style.width = '70px';
+                itemDiv.style.height = '85px';
+                itemDiv.style.padding = '5px';
+                itemDiv.innerHTML = `
+                    <span style="font-size: 40px; margin-top: 5px;">${item.emoji}</span>
+                    <div class="char-name" style="font-size: 11px; margin-bottom: 2px;">${item.name}</div>
+                `;
+                itemDiv.onclick = () => addSpriteToPlayground(item.emoji);
+                palette.appendChild(itemDiv);
+            });
+        }
+
+        // إضافة كائن جديد للمشهد التفاعلي (أقصى حد: 6 كائنات)
+        function addSpriteToPlayground(emoji) {
+            if (gameState.playgroundSprites.length >= 6) {
+                playSound('click');
+                // استدعاء نافذة التنبيه المخصصة بدلاً من alert العادية
+                showAlert("عذراً يا بطل! 🛑", "لقد وصلت للحد الأقصى المسموح به وهو 6 كائنات داخل مشهدك التفاعلي لتظل واجهتك رائعة وجميلة!", "🐳");
+                return;
+            }
+
+            playSound('pop');
+
+            const newSprite = {
+                id: 'sprite_' + Date.now() + Math.floor(Math.random() * 1000),
+                emoji: emoji,
+                x: '42%',
+                y: '35%',
+                size: 100,
+                behavior: ''
+            };
+
+            gameState.playgroundSprites.push(newSprite);
+            renderPlaygroundSprites();
+            selectPlaygroundSprite(newSprite.id);
+        }
+
+        // رسم كائنات الساحة التفاعلية الحرة على الواجهة
+        function renderPlaygroundSprites() {
+            const scene = document.getElementById('playground-scene');
+            const elements = scene.querySelectorAll('.sprite-container');
+            elements.forEach(el => el.remove());
+
+            gameState.playgroundSprites.forEach(sprite => {
+                const sDiv = document.createElement('div');
+                sDiv.id = sprite.id;
+                sDiv.className = 'sprite-container';
+                sDiv.style.left = sprite.x;
+                sDiv.style.top = sprite.y;
+
+                if (gameState.activePlaygroundSprite === sprite.id) {
+                    sDiv.classList.add('active-sprite');
+                }
+
+                sDiv.innerHTML = `
+                    <div class="sprite-scaler" style="transform: scale(${sprite.size / 100})">
+                        <div class="sprite-element ${sprite.behavior}">${sprite.emoji}</div>
+                    </div>
+                `;
+
+                // تسجيل أحداث السحب واللمس للكائن المضاف
+                sDiv.addEventListener('pointerdown', (e) => {
+                    selectPlaygroundSprite(sprite.id);
+                    startDragging(e, sDiv);
+                });
+
+                scene.appendChild(sDiv);
+            });
+        }
+
+        // تحديد الكائن الذي اختاره الطفل للتعديل عليه
+        function selectPlaygroundSprite(spriteId) {
+            gameState.activePlaygroundSprite = spriteId;
+            
+            const elements = document.querySelectorAll('#playground-scene .sprite-container');
+            elements.forEach(el => {
+                if (el.id === spriteId) {
+                    el.classList.add('active-sprite');
+                } else {
+                    el.classList.remove('active-sprite');
+                }
+            });
+
+            const controls = document.getElementById('playground-sprite-controls');
+            const activeSpriteData = gameState.playgroundSprites.find(s => s.id === spriteId);
+            
+            if (activeSpriteData) {
+                controls.style.display = 'block';
+                document.getElementById('pg-size-display').innerText = `${activeSpriteData.size}%`;
+            } else {
+                controls.style.display = 'none';
+            }
+        }
+
+        // تعديل حجم الكائن المحدد داخل الساحة الحرة بمقدار 10 درجات
+        function changePlaygroundSpriteSize(delta) {
+            if (!gameState.activePlaygroundSprite) return;
+            playSound('click');
+
+            const activeSprite = gameState.playgroundSprites.find(s => s.id === gameState.activePlaygroundSprite);
+            if (activeSprite) {
+                let newSize = activeSprite.size + delta;
+                if (newSize < 40) newSize = 40;
+                if (newSize > 200) newSize = 200;
+
+                activeSprite.size = newSize;
+                document.getElementById('pg-size-display').innerText = `${newSize}%`;
+
+                const el = document.getElementById(activeSprite.id);
+                if (el) {
+                    const scaler = el.querySelector('.sprite-scaler');
+                    scaler.style.transform = `scale(${newSize / 100})`;
+                }
+            }
+        }
+
+        // تعيين الحركة النشطة للكائن المحدد داخل الساحة الحرة
+        function applyPlaygroundBehavior(behaviorClass) {
+            if (!gameState.activePlaygroundSprite) return;
+            playSound('pop');
+
+            const activeSprite = gameState.playgroundSprites.find(s => s.id === gameState.activePlaygroundSprite);
+            if (activeSprite) {
+                activeSprite.behavior = behaviorClass;
+                const el = document.getElementById(activeSprite.id);
+                if (el) {
+                    const element = el.querySelector('.sprite-element');
+                    element.className = 'sprite-element ' + behaviorClass;
+                }
+            }
+        }
+
+        // حذف كائن محدد من المشهد بالكامل
+        function deleteActiveSprite() {
+            if (!gameState.activePlaygroundSprite) return;
+            playSound('pop');
+
+            gameState.playgroundSprites = gameState.playgroundSprites.filter(s => s.id !== gameState.activePlaygroundSprite);
+            gameState.activePlaygroundSprite = null;
+
+            renderPlaygroundSprites();
+            document.getElementById('playground-sprite-controls').style.display = 'none';
+        }
+
+        // نظام السحب والإفلات الكامل للأجهزة المكتبية واللوحية باللمس (Pointer Events)
+        let activeDragElement = null;
+        let startX, startY, initialLeft, initialTop;
+
+        function setupDragAndDrop() {
+            const singleSprite = document.getElementById('lvl2-sprite');
+            singleSprite.addEventListener('pointerdown', (e) => {
+                startDragging(e, singleSprite);
+            });
+
+            document.addEventListener('pointermove', drag);
+            document.addEventListener('pointerup', endDrag);
+        }
+
+        function startDragging(e, element) {
+            activeDragElement = element;
+            startX = e.clientX;
+            startY = e.clientY;
+            
+            initialLeft = element.offsetLeft;
+            initialTop = element.offsetTop;
+            
+            element.setPointerCapture(e.pointerId);
+            e.stopPropagation();
+        }
+
+        function drag(e) {
+            if (!activeDragElement) return;
+
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+
+            let newLeft = initialLeft + dx;
+            let newTop = initialTop + dy;
+
+            const container = activeDragElement.parentElement;
+            const containerRect = container.getBoundingClientRect();
+            const elementRect = activeDragElement.getBoundingClientRect();
+
+            const maxLeft = containerRect.width - elementRect.width;
+            const maxTop = containerRect.height - elementRect.height;
+
+            if (newLeft < 0) newLeft = 0;
+            if (newLeft > maxLeft) newLeft = maxLeft;
+            if (newTop < 0) newTop = 0;
+            if (newTop > maxTop) newTop = maxTop;
+
+            activeDragElement.style.left = `${newLeft}px`;
+            activeDragElement.style.top = `${newTop}px`;
+
+            if (gameState.activeStage === 5) {
+                const spriteId = activeDragElement.id;
+                const activeSprite = gameState.playgroundSprites.find(s => s.id === spriteId);
+                if (activeSprite) {
+                    activeSprite.x = `${(newLeft / containerRect.width) * 100}%`;
+                    activeSprite.y = `${(newTop / containerRect.height) * 100}%`;
+                }
+            }
+        }
+
+        function endDrag(e) {
+            if (activeDragElement) {
+                activeDragElement.releasePointerCapture(e.pointerId);
+                activeDragElement = null;
+            }
+        }
+
+        // إكمال اللعبة وإطلاق احتفالية النهاية مع التقاط صورة للمشهد
+        function finishGame() {
+            playSound('click');
+
+            const sceneElement = document.getElementById('playground-scene');
+            
+            // إزالة إطار التحديد النشط (الأصفر المتقطع) من فوق الـ Sprites لتخرج الصورة نظيفة وجميلة
+            const activeSprites = document.querySelectorAll('.active-sprite');
+            activeSprites.forEach(el => el.classList.remove('active-sprite'));
+
+            // التقاط المشهد كصورة مذهلة باستخدام مكتبة html2canvas
+            html2canvas(sceneElement, {
+                scale: 2,           // مضاعفة الدقة لتظهر الـ Emojis والخلفيات بوضوح رائع
+                backgroundColor: null,
+                logging: false,
+                useCORS: true
+            }).then(canvas => {
+                // حفظ الصورة في حالة اللعبة
+                gameState.capturedImage = canvas.toDataURL('image/png');
+
+                // إخفاء المرحلة الخامسة والانتقال للنهائية
+                document.getElementById('stage-5').classList.remove('active');
+                document.getElementById('game-header').style.display = 'none';
+
+                const screen = document.getElementById('celebration-screen');
+                screen.classList.add('active');
+
+                // تفجير النجوم التفاعلية المبهجة
+                for (let i = 0; i < 35; i++) {
+                    setTimeout(spawnCelebrationStar, i * 80);
+                }
+            }).catch(err => {
+                console.error("عذراً، تعذر التقاط المشهد كصورة:", err);
+                // تدارك الأخطاء والانتقال السلس للمرحلة النهائية في كل الأحوال
+                document.getElementById('stage-5').classList.remove('active');
+                document.getElementById('game-header').style.display = 'none';
+                document.getElementById('celebration-screen').classList.add('active');
+            });
+        }
+
+        // إطلاق وتأثير النجوم المتطايرة التفاعلية في المشهد النهائي
+        function spawnCelebrationStar() {
+            const screen = document.getElementById('celebration-screen');
+            const star = document.createElement('div');
+            star.className = 'star-particle';
+            
+            const emojis = ['⭐', '✨', '🎈', '🎉', '🌟', '🍭', '🧸'];
+            star.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+            
+            star.style.left = '50%';
+            star.style.top = '220px';
+
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 160 + Math.random() * 280;
+            const tx = Math.cos(angle) * distance;
+            const ty = Math.sin(angle) * distance;
+
+            star.style.setProperty('--tx', `${tx}px`);
+            star.style.setProperty('--ty', `${ty}px`);
+
+            screen.appendChild(star);
+
+            setTimeout(() => {
+                star.remove();
+            }, 1500);
+        }
+
+        // عرض مشهد الطفل الإبداعي في نافذة منبثقة كرتونية
+        function showCapturedScene() {
+            playSound('pop');
+            const container = document.getElementById('captured-image-container');
+            container.innerHTML = '';
+
+            if (gameState.capturedImage) {
+                const img = document.createElement('img');
+                img.src = gameState.capturedImage;
+                img.style.width = '100%';
+                img.style.height = 'auto';
+                img.style.display = 'block';
+                img.alt = 'مشهد الـ Sprite الخاص بي';
+                container.appendChild(img);
+            } else {
+                container.innerHTML = '<p class="popup-text" style="padding: 20px;">نأسف يا بطل، واجهنا مشكلة صغيرة في تجهيز الصورة!</p>';
+            }
+
+            document.getElementById('scene-preview-popup').style.display = 'flex';
+        }
+
+        // إغلاق نافذة المعاينة
+        function closeScenePreview() {
+            playSound('click');
+            document.getElementById('scene-preview-popup').style.display = 'none';
+        }
+
+        // تحميل الصورة وحفظها على الجهاز
+        function downloadSceneImage() {
+            playSound('click');
+            if (!gameState.capturedImage) return;
+
+            const link = document.createElement('a');
+            link.download = 'My_Sprite_World.png';
+            link.href = gameState.capturedImage;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // إعادة تشغيل اللعبة وتصفير الإعدادات للعودة للبداية
+        function restartGame() {
+            gameState.activeStage = 1;
+            gameState.selectedCharEmoji = '🐠';
+            gameState.selectedCharName = 'سمكة صفراء';
+            gameState.positionX = '42%';
+            gameState.positionY = '35%';
+            gameState.size = 100;
+            gameState.behavior = '';
+            gameState.playgroundTheme = 'sea';
+            gameState.playgroundSprites = [];
+            gameState.activePlaygroundSprite = null;
+            gameState.capturedImage = null; // تصفير مخزن الصورة الملتقطة عند العودة للعب
+
+            document.getElementById('lvl1-controls').style.display = 'none';
+            const cards = document.querySelectorAll('#stage-1 .char-card');
+            cards.forEach(c => c.classList.remove('selected'));
+            document.getElementById('lvl1-character-area').style.display = 'none';
+
+            document.getElementById('game-header').style.display = 'block';
+            for (let i = 1; i <= 5; i++) {
+                const step = document.getElementById(`step-${i}`);
+                step.className = 'progress-step';
+            }
+            document.getElementById('step-1').classList.add('active');
+
+            document.getElementById('celebration-screen').classList.remove('active');
+            document.getElementById('stage-1').classList.add('active');
+        }
+    </script>
+</body>
+</html>
