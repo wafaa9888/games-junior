@@ -888,7 +888,7 @@
 
             <div class="touch-zone" id="touch-zone">
                 <div class="static-flower" id="flower">🌸</div>
-                <div class="movable-bee" id="bee" style="left: 450px; top: 100px;">🐝</div>
+                <div class="movable-bee" id="bee">🐝</div>
             </div>
 
             <!-- أزرار حركة بديلة للنحلة -->
@@ -985,7 +985,7 @@
             <div class="certificate">
                 <div style="font-size: 70px;">🎓</div>
                 <h2 style="color: #D35400; margin: 15px 0;">شهادة المحقق البرمجي الذكي</h2>
-                <p style="font-size: 19px; line-height: 1.6; font-weight: bold; color: #34495E;">
+               <p style="font-size: 19px; line-height: 1.6; font-weight: bold; color: #34495E;">
                     لقد اكتشفت سر من اسرار المبرمجين  :<br>
                     <span style="background-color: #FEF9E7; padding: 10px 15px; border-radius: 12px; color: #D35400; display: inline-block; margin: 15px 0; border: 3px dashed #F1C40F;">
                         "يحدث شيء أولاً (الحدث) ... ثم تستجيب الشخصية بالأفعال!"
@@ -1379,14 +1379,29 @@
 
 
         // ================= المهمة الرابعة: لقاء الأصدقاء =================
-        let beePos = { x: 450, y: 100 };
+        let beePos = { x: 220, y: 80 };
         let touchCompleted = false;
 
         function initTouchTask() {
             touchCompleted = false;
-            beePos = { x: 450, y: 100 };
+            
+            // تهيئة موقع النحلة بشكل تفاعلي حسب عرض اللوحة الفعلي لتظهر دائماً بشكل سليم على الهاتف والكمبيوتر
+            const zone = document.getElementById('touch-zone');
+            const rect = zone.getBoundingClientRect();
+            const width = rect.width || zone.offsetWidth || 300;
+            
+            // وضع النحلة على بعد 80 بكسل من الحافة اليمنى لضمان ظهورها
+            beePos = { x: width - 80, y: 80 };
+            
             document.getElementById('touch-question').style.display = 'none';
             document.getElementById('btn-touch-next').style.display = 'none';
+            
+            // إعادة التموضع وإزالة الحركات القديمة
+            const bee = document.getElementById('bee');
+            const flower = document.getElementById('flower');
+            bee.className = 'movable-bee';
+            flower.className = 'static-flower';
+            
             updateBeeElement();
         }
 
@@ -1399,7 +1414,10 @@
         function moveBee(dx, dy) {
             if (touchCompleted) return;
             
-            beePos.x = Math.max(10, Math.min(550, beePos.x + dx));
+            const zone = document.getElementById('touch-zone');
+            const width = zone.getBoundingClientRect().width || zone.offsetWidth || 300;
+            
+            beePos.x = Math.max(10, Math.min(width - 60, beePos.x + dx));
             beePos.y = Math.max(10, Math.min(180, beePos.y + dy));
             
             updateBeeElement();
@@ -1457,17 +1475,25 @@
             beeEl.style.cursor = 'grab';
         }
 
+        // فحص التلامس الحقيقي بمحاذاة الأبعاد (Bounding Boxes Check) لتوافق كامل مع شاشات الجوال والكمبيوتر
         function checkTouchCollision() {
+            const bee = document.getElementById('bee');
             const flowerEl = document.getElementById('flower');
-            const dx = beePos.x - 20;
-            const dy = beePos.y - 170;
-            const distance = Math.sqrt(dx*dx + dy*dy);
+            
+            const bRect = bee.getBoundingClientRect();
+            const fRect = flowerEl.getBoundingClientRect();
+            
+            // تحقق تلامس المستطيلات الحقيقي
+            const isOverlapping = !(bRect.right < fRect.left || 
+                                    bRect.left > fRect.right || 
+                                    bRect.bottom < fRect.top || 
+                                    bRect.top > fRect.bottom);
 
-            if (distance < 60 && !touchCompleted) {
+            if (isOverlapping && !touchCompleted) {
                 touchCompleted = true;
                 playSound('success');
                 
-                beeEl.classList.add('jump-animation');
+                bee.classList.add('jump-animation');
                 flowerEl.classList.add('bounce-infinite');
                 
                 createConfettiAround(flowerEl);
