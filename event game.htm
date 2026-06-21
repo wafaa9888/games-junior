@@ -1,0 +1,1768 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لعبة المحقق الذكي 🎮</title>
+    <!-- خط تجول العربي اللطيف من جوجل -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@500;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #FF477E;
+            --primary-dark: #D11A50;
+            --secondary: #FFB000;
+            --secondary-dark: #C68500;
+            --success: #2ED573;
+            --success-dark: #1F9B51;
+            --accent: #1E90FF;
+            --purple: #9B5DE5;
+            --purple-dark: #7633C1;
+            --pink-light: #FFE3EC;
+            --bg-color: #F0F3F4;
+            --card-bg: #FFFFFF;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Tajawal', sans-serif;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* خلفية كرتونية مبهجة ومتحركة للأطفال */
+        body {
+            background: linear-gradient(135deg, #FFDEE9 0%, #B5FFFC 100%);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+            color: #2C3E50;
+            padding: 15px;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* حاوية اللعبة الرئيسية بأسلوب كرتوني فائق الجاذبية */
+        .game-container {
+            width: 100%;
+            max-width: 650px;
+            background: var(--card-bg);
+            border-radius: 40px;
+            box-shadow: 0 20px 0px rgba(0, 0, 0, 0.08), 0 30px 50px rgba(26, 82, 118, 0.15);
+            border: 8px solid #FFF;
+            padding: 30px;
+            position: relative;
+            text-align: center;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* شريط الشارات العلوي بلمسة تفاعلية متطورة */
+        .badge-bar {
+            display: flex;
+            justify-content: space-around;
+            background: #F4F6F7;
+            padding: 15px 10px;
+            border-radius: 25px;
+            margin-bottom: 25px;
+            border: 4px solid #E5E8E8;
+            box-shadow: inset 0 4px 10px rgba(0,0,0,0.05);
+            gap: 5px;
+        }
+
+        /* الحالات المختلفة للشارات (مغلقة، نشطة، تم إنجازها) */
+        .badge-slot {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 13px;
+            font-weight: 900;
+            opacity: 0.35;
+            transform: scale(0.9);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            color: #7F8C8D;
+            padding: 8px;
+            border-radius: 18px;
+            border: 3px solid transparent;
+            flex: 1;
+        }
+
+        /* حالة المرحلة النشطة التي يلعبها الطفل حالياً */
+        .badge-slot.active {
+            opacity: 1;
+            transform: scale(1.08);
+            color: var(--primary);
+            background: #FFF;
+            border-color: var(--primary);
+            box-shadow: 0 8px 15px rgba(255, 71, 126, 0.15);
+            animation: activePulse 1.5s infinite alternate;
+        }
+
+        @keyframes activePulse {
+            0% { transform: scale(1.03); box-shadow: 0 4px 10px rgba(255, 71, 126, 0.1); }
+            100% { transform: scale(1.1); box-shadow: 0 8px 20px rgba(255, 71, 126, 0.25); }
+        }
+
+        /* حالة الشارة التي تم جمعها بنجاح */
+        .badge-slot.earned {
+            opacity: 1;
+            transform: scale(1.1);
+            color: #27AE60;
+            background: #E8F8F5;
+            border-color: var(--success);
+            box-shadow: 0 8px 15px rgba(46, 213, 115, 0.15);
+            animation: badgeBounce 0.8s ease forwards;
+        }
+
+        @keyframes badgeBounce {
+            0% { transform: scale(0.9); }
+            50% { transform: scale(1.3) rotate(15deg); }
+            100% { transform: scale(1.1) rotate(0); }
+        }
+
+        .badge-icon {
+            font-size: 34px;
+            margin-bottom: 5px;
+            filter: drop-shadow(0 4px 0px rgba(0,0,0,0.08));
+            transition: transform 0.3s ease;
+        }
+
+        .badge-slot.earned .badge-icon {
+            animation: wobble 1.5s infinite ease-in-out;
+        }
+
+        @keyframes wobble {
+            0%, 100% { transform: rotate(-8deg); }
+            50% { transform: rotate(8deg); }
+        }
+
+        /* تصاميم المراحل */
+        .screen {
+            display: none;
+            animation: slideIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(30px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        h1 {
+            font-size: 32px;
+            font-weight: 900;
+            color: var(--primary);
+            margin-bottom: 15px;
+            text-shadow: 3px 3px 0px #FFF, 5px 5px 0px rgba(0,0,0,0.05);
+        }
+
+        p.hint {
+            font-size: 19px;
+            font-weight: 800;
+            color: #5D6D7E;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        /* أزرار ضخمة كرتونية بنمط 3D ممتع عند الضغط */
+        .btn {
+            background: linear-gradient(135deg, var(--secondary), #FFA000);
+            color: white;
+            border: none;
+            border-bottom: 8px solid var(--secondary-dark);
+            padding: 18px 45px;
+            font-size: 24px;
+            font-weight: 900;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            margin: 15px 0;
+            outline: none;
+            box-shadow: 0 10px 20px rgba(243, 156, 18, 0.25);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(243, 156, 18, 0.35);
+        }
+
+        .btn:active {
+            transform: translateY(6px);
+            border-bottom-width: 2px;
+            box-shadow: 0 4px 8px rgba(243, 156, 18, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success), #26C262);
+            border-bottom-color: var(--success-dark);
+            box-shadow: 0 10px 20px rgba(46, 213, 115, 0.25);
+        }
+        .btn-success:hover {
+            box-shadow: 0 12px 24px rgba(46, 213, 115, 0.35);
+        }
+        .btn-success:active {
+            border-bottom-width: 2px;
+        }
+
+        /* بطاقات الأسئلة والتصويت كرتونية زاهية */
+        .question-box {
+            background: #F4F9FD;
+            border: 6px solid #AED6F1;
+            border-radius: 25px;
+            padding: 22px;
+            margin-top: 25px;
+            box-shadow: 0 10px 0px #D4E6F1;
+            animation: popUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.2);
+        }
+
+        @keyframes popUp {
+            from { transform: scale(0.85); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .question-title {
+            font-size: 21px;
+            font-weight: 900;
+            color: #2E4053;
+            margin-bottom: 18px;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 14px;
+        }
+
+        .option-card {
+            background: #FFFFFF;
+            border: 4px solid #BDC3C7;
+            padding: 16px 20px;
+            border-radius: 20px;
+            font-size: 19px;
+            font-weight: 900;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 6px 0px #BDC3C7;
+        }
+
+        .option-card:hover {
+            background: #EBF5FB;
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 0px #3498DB;
+        }
+
+        .option-card:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0px #3498DB;
+        }
+
+        .option-card.correct {
+            background: #E8F8F5 !important;
+            border-color: var(--success) !important;
+            color: #196F3D;
+            box-shadow: 0 6px 0px var(--success-dark) !important;
+        }
+
+        .option-card.wrong {
+            background: #FDEDEC !important;
+            border-color: var(--primary) !important;
+            color: #78281F;
+            box-shadow: 0 6px 0px var(--primary-dark) !important;
+        }
+
+        /* الطابع الأنيق لعلامة التحقق الديناميكية */
+        .dynamic-indicator {
+            font-size: 24px;
+            margin-right: 15px;
+            animation: popUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* كائنات اللعبة التفاعلية */
+        .character-zone {
+            height: 220px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background: #F8F9F9;
+            border-radius: 35px;
+            border: 5px dashed #BDC3C7;
+            margin: 20px 0;
+            overflow: hidden;
+            box-shadow: inset 0 6px 15px rgba(0,0,0,0.05);
+        }
+
+        .character {
+            font-size: 90px;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: inline-block;
+            cursor: pointer;
+            filter: drop-shadow(0 8px 0px rgba(0,0,0,0.05));
+        }
+
+        /* مؤثرات حركة مميزة */
+        @keyframes robot-jump {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-80px) scale(1.15) rotate(12deg); }
+        }
+        .jump-animation {
+            animation: robot-jump 0.6s cubic-bezier(0.25, 0.8, 0.25, 1) 2;
+        }
+
+        .bounce-infinite {
+            animation: bounce 1.2s infinite alternate cubic-bezier(0.455, 0.03, 0.515, 0.955);
+        }
+
+        @keyframes bounce {
+            0% { transform: translateY(0) scale(1); }
+            100% { transform: translateY(-15px) scale(1.05); }
+        }
+
+        /* العداد الرقمي */
+        .countdown {
+            font-size: 80px;
+            font-weight: 900;
+            color: var(--primary);
+            display: none;
+            text-shadow: 4px 4px 0 #FFF, 8px 8px 0px rgba(0,0,0,0.05);
+            animation: pulse 0.5s infinite alternate;
+        }
+
+        @keyframes pulse {
+            from { transform: scale(0.9); }
+            to { transform: scale(1.1); }
+        }
+
+        /* تصميم المتاهة (المرحلة 2) */
+        .maze-board {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            grid-template-rows: repeat(6, 1fr);
+            gap: 6px;
+            width: 320px;
+            height: 320px;
+            margin: 20px auto;
+            border: 8px solid #FF819E;
+            background: #FFE3EC;
+            border-radius: 25px;
+            position: relative;
+            padding: 8px;
+            box-shadow: 0 12px 0px #FF477E;
+            /* هام جداً: إجبار المتاهة على العمل باتجاه LTR ليكون الاتجاه متطابقاً تماماً مع مفاتيح الأسهم دون انعكاس */
+            direction: ltr; 
+        }
+
+        .maze-cell {
+            background: #FFF;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            box-shadow: inset 0 -3px 0px rgba(0,0,0,0.05);
+        }
+
+        .maze-wall {
+            background: #FFB3C6;
+            box-shadow: none;
+        }
+
+        .maze-path {
+            background: #FFFFFF;
+        }
+
+        .player {
+            font-size: 32px;
+            z-index: 10;
+            transition: all 0.15s cubic-bezier(0.25, 0.8, 0.25, 1);
+            filter: drop-shadow(0 3px 0px rgba(0,0,0,0.1));
+        }
+
+        .target {
+            font-size: 32px;
+            animation: heartbeat 1s infinite alternate;
+        }
+
+        @keyframes heartbeat {
+            from { transform: scale(0.95); }
+            to { transform: scale(1.15); }
+        }
+
+        /* لوحة تحكم بالأسهم على الشاشة بلمسة كرتونية جذابة */
+        .d-pad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            width: 170px;
+            margin: 15px auto;
+        }
+
+        .d-btn {
+            background: #FFF;
+            border: 4px solid #FF819E;
+            border-radius: 18px;
+            padding: 12px;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #FF819E;
+            touch-action: manipulation;
+            transition: all 0.1s;
+        }
+
+        .d-btn:hover {
+            background: #FFF0F5;
+        }
+
+        .d-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #FF819E;
+        }
+
+        /* المرحلة الثالثة - جزيرة المفاجآت */
+        .island-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+            margin: 25px 0;
+        }
+
+        .island-card {
+            background: #FCF3CF;
+            border: 5px solid #F4D03F;
+            border-radius: 25px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            box-shadow: 0 8px 0px #F4D03F;
+        }
+
+        .island-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 0px #F4D03F;
+        }
+
+        .island-card:active {
+            transform: translateY(6px);
+            box-shadow: 0 2px 0px #F4D03F;
+        }
+
+        /* تلوين مختلف للبطاقات لزيادة البهجة */
+        .island-card:nth-child(2) { background: #D5F5E3; border-color: #2ECC71; box-shadow: 0 8px 0px #2ECC71; }
+        .island-card:nth-child(2):hover { box-shadow: 0 12px 0px #2ECC71; }
+        .island-card:nth-child(2):active { box-shadow: 0 2px 0px #2ECC71; }
+
+        .island-card:nth-child(3) { background: #E8F8F5; border-color: #17A589; box-shadow: 0 8px 0px #17A589; }
+        .island-card:nth-child(3):hover { box-shadow: 0 12px 0px #17A589; }
+        .island-card:nth-child(3):active { box-shadow: 0 2px 0px #17A589; }
+
+        .island-card:nth-child(4) { background: #EBF5FB; border-color: #3498DB; box-shadow: 0 8px 0px #3498DB; }
+        .island-card:nth-child(4):hover { box-shadow: 0 12px 0px #3498DB; }
+        .island-card:nth-child(4):active { box-shadow: 0 2px 0px #3498DB; }
+
+        .island-card .island-char {
+            font-size: 55px;
+            display: block;
+            margin-bottom: 8px;
+            transition: transform 0.4s;
+            filter: drop-shadow(0 4px 0px rgba(0,0,0,0.05));
+        }
+
+        .island-card .island-label {
+            font-weight: 900;
+            color: #2C3E50;
+            font-size: 16px;
+        }
+
+        /* حركات حيوانات الجزيرة */
+        .dance { animation: dance-anim 0.6s infinite alternate; }
+        .jump { animation: jump-anim 0.5s infinite; }
+        .spin { animation: spin-anim 0.6s infinite linear; }
+        .speak { animation: speak-anim 0.4s infinite; }
+
+        @keyframes dance-anim {
+            0% { transform: rotate(-15deg) translateY(0); }
+            100% { transform: rotate(15deg) translateY(-15px); }
+        }
+        @keyframes jump-anim {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-35px) scaleY(0.9); }
+        }
+        @keyframes spin-anim {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        @keyframes speak-anim {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.25); }
+        }
+
+        /* المرحلة الرابعة: اللمس */
+        .touch-zone {
+            height: 250px;
+            background: linear-gradient(#D5F5E3, #E8F8F5);
+            border: 5px solid #2ECC71;
+            border-radius: 35px;
+            position: relative;
+            overflow: hidden;
+            margin: 20px 0;
+            box-shadow: inset 0 6px 15px rgba(0,0,0,0.05);
+        }
+
+        .movable-bee {
+            position: absolute;
+            font-size: 50px;
+            cursor: grab;
+            z-index: 10;
+            transition: left 0.1s, top 0.1s;
+            filter: drop-shadow(0 4px 0px rgba(0,0,0,0.1));
+        }
+
+        .static-flower {
+            position: absolute;
+            bottom: 25px;
+            left: 25px;
+            font-size: 60px;
+            filter: drop-shadow(0 4px 0px rgba(0,0,0,0.1));
+        }
+
+        .sparkle-fx {
+            position: absolute;
+            pointer-events: none;
+            font-size: 26px;
+            animation: float-sparkle 1s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+            z-index: 99;
+        }
+
+        @keyframes float-sparkle {
+            0% { transform: translate(0, 0) scale(1) rotate(0); opacity: 1; }
+            100% { transform: translate(var(--mx), var(--my)) scale(0) rotate(180deg); opacity: 0; }
+        }
+
+        /* مصنع المفاجآت (المرحلة الخامسة) */
+        .factory-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            margin: 25px 0;
+        }
+
+        .factory-row {
+            background: #F5EEF8;
+            border: 4px solid #D2B4DE;
+            border-radius: 25px;
+            padding: 18px;
+            text-align: right;
+            box-shadow: 0 6px 0px #D2B4DE;
+        }
+
+        .factory-title {
+            font-size: 18px;
+            font-weight: 900;
+            color: #6C3483;
+            margin-bottom: 12px;
+        }
+
+        .cards-flex {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            scrollbar-width: thin;
+        }
+
+        .game-card {
+            background: white;
+            border: 4px solid #BDC3C7;
+            border-radius: 18px;
+            padding: 12px 18px;
+            font-size: 17px;
+            font-weight: 900;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+            box-shadow: 0 4px 0px #BDC3C7;
+        }
+
+        .game-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--purple);
+            box-shadow: 0 6px 0px var(--purple-dark);
+        }
+
+        .game-card.selected {
+            background: #EBDEF0;
+            border-color: var(--purple);
+            transform: translateY(4px);
+            box-shadow: 0 1px 0px var(--purple-dark) !important;
+            color: #6C3483;
+        }
+
+        .recipe-preview {
+            background: #EBDEF0;
+            border: 4px dashed var(--purple);
+            padding: 18px;
+            border-radius: 20px;
+            font-size: 19px;
+            font-weight: 900;
+            color: #4A235A;
+            margin: 20px 0;
+            box-shadow: inset 0 4px 8px rgba(0,0,0,0.05);
+        }
+
+        /* ساحة التجربة بستايل كرتوني رائع */
+        .factory-sandbox {
+            height: 180px;
+            background: #212F3D;
+            border-radius: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            border: 6px solid #34495E;
+            box-shadow: 0 10px 0px #34495E;
+        }
+
+        .sandbox-char {
+            font-size: 75px;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 5;
+            filter: drop-shadow(0 4px 10px rgba(0,0,0,0.3));
+        }
+
+        /* شاشة النهاية والاحتفال الكبير */
+        .celebration-screen {
+            display: none;
+            text-align: center;
+        }
+
+        .firework {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: firework-anim 1s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+            z-index: 99;
+        }
+
+        @keyframes firework-anim {
+            0% { transform: translate(0, 0) scale(1.5); opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+        }
+
+        .certificate {
+            background: #FFF;
+            border: 8px double #F1C40F;
+            padding: 30px;
+            border-radius: 30px;
+            margin-top: 25px;
+            box-shadow: 0 15px 0px #F1C40F, 0 15px 30px rgba(0,0,0,0.1);
+            display: inline-block;
+            width: 100%;
+        }
+
+        /* مؤثر الظهور للمحقق */
+        .detective-intro {
+            font-size: 85px;
+            margin-bottom: 12px;
+            filter: drop-shadow(0 6px 0px rgba(0,0,0,0.05));
+        }
+
+        /* مؤشر خطير لتقدم الحوار */
+        .speech-bubble {
+            background: #FFF;
+            border: 4px solid #2C3E50;
+            border-radius: 25px;
+            padding: 18px;
+            position: relative;
+            margin-bottom: 25px;
+            font-weight: 900;
+            font-size: 20px;
+            box-shadow: 0 8px 0px #2C3E50;
+            line-height: 1.6;
+        }
+
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -18px;
+            right: 40px;
+            border-width: 18px 18px 0;
+            border-style: solid;
+            border-color: #FFF transparent;
+            display: block;
+            width: 0;
+        }
+
+        .speech-bubble::before {
+            content: '';
+            position: absolute;
+            bottom: -24px;
+            right: 37px;
+            border-width: 21px 21px 0;
+            border-style: solid;
+            border-color: #2C3E50 transparent;
+            display: block;
+            width: 0;
+            z-index: -1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container" id="game-window">
+        
+        <!-- شريط الشارات لحفظ تقدم البطل وتحديد المرحلة الحالية -->
+        <div class="badge-bar" id="badgeBar">
+            <div class="badge-slot" id="badge-time">
+                <span class="badge-icon">⏰</span>
+                <span>لغز الوقت</span>
+            </div>
+            <div class="badge-slot" id="badge-maze">
+                <span class="badge-icon">🧭</span>
+                <span>الأسهم</span>
+            </div>
+            <div class="badge-slot" id="badge-click">
+                <span class="badge-icon">🖱️</span>
+                <span>النقر</span>
+            </div>
+            <div class="badge-slot" id="badge-touch">
+                <span class="badge-icon">🤝</span>
+                <span>اللمس</span>
+            </div>
+        </div>
+
+        <!-- ================= الشاشة الافتتاحية ================= -->
+        <div class="screen active" id="screen-intro">
+            <div class="detective-intro bounce-infinite">🕵️‍♂️</div>
+            <h1>المحقق الذكي</h1>
+            <div class="speech-bubble">
+                مرحباً أيها البطل الذكي! 🌟<br>
+                هناك سر غامض تخفيه الشخصيات في هذه اللعبة، هل تكتشفه معي؟<br>
+                <strong>اجمع 4 شارات ذهبية لتكشف السر!</strong>
+            </div>
+            <button class="btn" onclick="goToScreen('screen-time')">🔍 انطلق للمهمة الأولى</button>
+        </div>
+
+        <!-- ================= المهمة الأولى: لغز الوقت ================= -->
+        <div class="screen" id="screen-time">
+            <h1>المهمة 1: لغز الوقت ⏰</h1>
+            <p class="hint">تأمل جيداً في هذا الروبوت اللطيف...</p>
+            
+            <div class="character-zone">
+                <div id="countdown" class="countdown">3</div>
+                <div id="robot-character" class="character">🤖</div>
+            </div>
+
+            <p class="hint" id="time-question-hint">اضغط على زر الانطلاق لنرى ما الذي سيحدث!</p>
+            
+            <button class="btn" id="btn-start-countdown" onclick="startTimeTask()">🚀 انطلاق</button>
+
+            <!-- صندوق السؤال (تم إخفاء علامات الصح والخطأ تماماً) -->
+            <div class="question-box" id="time-question" style="display: none;">
+                <div class="question-title">لغز للمحققين: لماذا قفز الروبوت الذكي فجأة؟ 🤔</div>
+                <div class="options-grid">
+                    <div class="option-card" onclick="checkAnswer(this, false, 'time')">
+                        <span>لأنه أراد أن يقفز من تلقاء نفسه ومفرده</span>
+                    </div>
+                    <div class="option-card" onclick="checkAnswer(this, true, 'time')">
+                        <span>لأن الوقت وصل إلى 3 ثوانٍ وانتهى العداد</span>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-success" id="btn-time-next" style="display: none;" onclick="goToScreen('screen-maze')">المهمة التالية 🧭</button>
+        </div>
+
+        <!-- ================= المهمة الثانية: متاهة الأسهم ================= -->
+        <div class="screen" id="screen-maze">
+            <h1>المهمة 2: متاهة الأسهم 🧭</h1>
+            <p class="hint">ساعد الفأرة اللطيفة 🐭 لتصل إلى قطعة الجبن اللذيذة 🧀!</p>
+
+            <div class="maze-board" id="maze-board">
+                <!-- سيتم ملء المتاهة بالـ JS -->
+            </div>
+
+            <!-- لوحة التحكم باللمس مفيدة لشاشات اللمس والموبايل -->
+            <div class="d-pad">
+                <div></div>
+                <button class="d-btn" onclick="movePlayer(0, -1)">⬆️</button>
+                <div></div>
+                <button class="d-btn" onclick="movePlayer(-1, 0)">⬅️</button>
+                <div style="display: flex; justify-content: center; align-items: center; font-size: 14px; font-weight: bold; color: #7F8C8D;">تحرك</div>
+                <button class="d-btn" onclick="movePlayer(1, 0)">➡️</button>
+                <div></div>
+                <button class="d-btn" onclick="movePlayer(0, 1)">⬇️</button>
+                <div></div>
+            </div>
+            
+            <p class="hint" style="font-size: 14px; color: #7F8C8D;">يمكنك استخدام أسهم لوحة المفاتيح أيضاً ⌨️</p>
+
+            <!-- سؤال لغز المتاهة (تم إخفاء علامات الصح والخطأ تماماً) -->
+            <div class="question-box" id="maze-question" style="display: none;">
+                <div class="question-title">أيها العبقري، كيف تحركت الفأرة لتصل للجبنة؟ 🧀</div>
+                <div class="options-grid">
+                    <div class="option-card" onclick="checkAnswer(this, false, 'maze')">
+                        <span>تحركت الفأرة بمفردها تلقائياً</span>
+                    </div>
+                    <div class="option-card" onclick="checkAnswer(this, true, 'maze')">
+                        <span>تحركت عندما قمت أنت بالضغط على الأسهم</span>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-success" id="btn-maze-next" style="display: none;" onclick="goToScreen('screen-island')">المهمة التالية 🖱️</button>
+        </div>
+
+        <!-- ================= المهمة الثالثة: جزيرة المفاجآت ================= -->
+        <div class="screen" id="screen-island">
+            <h1>المهمة 3: جزيرة المفاجآت 🖱️</h1>
+            <p class="hint">هناك حيوانات رائعة في هذه الجزيرة! انقر فوق كل واحد منها لرؤية مفاجأته! ✨</p>
+
+            <div class="island-grid">
+                <div class="island-card" onclick="triggerIslandAnimal(this, 'monkey', '🐵')">
+                    <span class="island-char" id="animal-monkey">🐵</span>
+                    <span class="island-label">القرد يرقص</span>
+                </div>
+                <div class="island-card" onclick="triggerIslandAnimal(this, 'frog', '🐸')">
+                    <span class="island-char" id="animal-frog">🐸</span>
+                    <span class="island-label">الضفدع يقفز</span>
+                </div>
+                <div class="island-card" onclick="triggerIslandAnimal(this, 'cat', '🐱')">
+                    <span class="island-char" id="animal-cat">🐱</span>
+                    <span class="island-label">القطة تموء</span>
+                </div>
+                <div class="island-card" onclick="triggerIslandAnimal(this, 'penguin', '🐧')">
+                    <span class="island-char" id="animal-penguin">🐧</span>
+                    <span class="island-label">البطريق يدور</span>
+                </div>
+            </div>
+
+            <p class="hint" style="color: #E74C3C; font-size: 16px;" id="island-interact-count">قم بالنقر واستكشافهم جميعاً لتفعيل السؤال!</p>
+
+            <!-- سؤال لغز الجزيرة (تم إخفاء علامات الصح والخطأ تماماً) -->
+            <div class="question-box" id="island-question" style="display: none;">
+                <div class="question-title">سؤال المحقق: متى بدأت هذه الحيوانات بالتحرك والمفاجآت? 🐵</div>
+                <div class="options-grid">
+                    <div class="option-card" onclick="checkAnswer(this, true, 'click')">
+                        <span>عندما قمت أنت بالنقر عليها</span>
+                    </div>
+                    <div class="option-card" onclick="checkAnswer(this, false, 'click')">
+                        <span>تحركت بمفردها دون أن يلمسها أحد</span>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-success" id="btn-island-next" style="display: none;" onclick="goToScreen('screen-touch')">المهمة التالية 🤝</button>
+        </div>
+
+        <!-- ================= المهمة الرابعة: لقاء الأصدقاء ================= -->
+        <div class="screen" id="screen-touch">
+            <h1>المهمة 4: لقاء الأصدقاء 🤝</h1>
+            <p class="hint">ساعد النحلة 🐝 لتصل وتلمس الزهرة 🌸 الجميلة!</p>
+
+            <div class="touch-zone" id="touch-zone">
+                <div class="static-flower" id="flower">🌸</div>
+                <div class="movable-bee" id="bee" style="left: 450px; top: 100px;">🐝</div>
+            </div>
+
+            <!-- أزرار حركة بديلة للنحلة -->
+            <div class="d-pad">
+                <div></div>
+                <button class="d-btn" onclick="moveBee(0, -30)">⬆️</button>
+                <div></div>
+                <button class="d-btn" onclick="moveBee(-30, 0)">⬅️</button>
+                <div style="display: flex; justify-content: center; align-items: center; font-size: 13px; font-weight: bold; color: #7F8C8D;">طر بالنحلة</div>
+                <button class="d-btn" onclick="moveBee(30, 0)">➡️</button>
+                <div></div>
+                <button class="d-btn" onclick="moveBee(0, 30)">⬇️</button>
+                <div></div>
+            </div>
+
+            <!-- سؤال لغز اللمس (تم إخفاء علامات الصح والخطأ تماماً) -->
+            <div class="question-box" id="touch-question" style="display: none;">
+                <div class="question-title">لغز اللمس: متى ظهرت النجوم السحرية الرائعة؟ ✨</div>
+                <div class="options-grid">
+                    <div class="option-card" onclick="checkAnswer(this, false, 'touch')">
+                        <span>ظهرت لوحدها بدون سبب</span>
+                    </div>
+                    <div class="option-card" onclick="checkAnswer(this, true, 'touch')">
+                        <span>عندما تلامست النحلة مع الزهرة</span>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-success" id="btn-touch-next" style="display: none;" onclick="goToScreen('screen-factory')">دخول مصنع المفاجآت 🏭</button>
+        </div>
+
+        <!-- ================= المرحلة الأخيرة: مصنع المفاجآت ================= -->
+        <div class="screen" id="screen-factory">
+            <h1>🏭 مصنع المفاجآت السحرية!</h1>
+            <p class="hint">أصبحت الآن خبيراً! اختر حدثاً واربطه بالفعل الذي تريده لتصنع كودك الخاص:</p>
+
+            <div class="factory-layout">
+                <!-- قسم الأحداث -->
+                <div class="factory-row">
+                    <div class="factory-title">1️⃣ اختر حَدَثـاً (متى يبدأ الشيء؟):</div>
+                    <div class="cards-flex" id="event-cards">
+                        <div class="game-card" onclick="selectFactoryItem('event', 'time', this)">⏰ بعد 3 ثوانٍ</div>
+                        <div class="game-card" onclick="selectFactoryItem('event', 'click', this)">🖱️ عند النقر على الشخصية</div>
+                        <div class="game-card" onclick="selectFactoryItem('event', 'touch', this)">🤝 عند اللمس</div>
+                    </div>
+                </div>
+
+                <!-- قسم الأفعال -->
+                <div class="factory-row">
+                    <div class="factory-title">2️⃣ اختر الاستجابة (ماذا تفعل الشخصية؟):</div>
+                    <div class="cards-flex" id="action-cards">
+                        <div class="game-card" onclick="selectFactoryItem('action', 'jump', this)">🐸 يقفز الضفدع</div>
+                        <div class="game-card" onclick="selectFactoryItem('action', 'balloon', this)">🎈 ظهور بالون</div>
+                        <div class="game-card" onclick="selectFactoryItem('action', 'star', this)">✨ نجوم</div>
+                        <div class="game-card" onclick="selectFactoryItem('action', 'sound', this)">🎵 صوت رائع</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- معاينة الصيغة البرمجية بطريقة سهلة ومحفزة للطفل -->
+            <div class="recipe-preview" id="recipe-text">
+                اختر حدثاً وفعلاً من الأعلى لتوليد الكود البرمجي السحري!
+            </div>
+
+            <!-- منطقة المحاكاة والتجربة (البطل هنا هو الضفدع دائماً) -->
+            <div class="factory-sandbox" id="sandbox">
+                <div class="sandbox-char" id="sandbox-character">🐸</div>
+            </div>
+
+            <button class="btn btn-success" style="width: 100%;" onclick="runFactoryTest()">▶️ جرّب تركيبتك البرمجية</button>
+
+            <!-- اللغز البرمجي الأخير لاستخلاص المفهوم بنجاح (تم إخفاء علامات الصح والخطأ تماماً) -->
+            <div class="question-box" id="final-discovery-box" style="display: none; margin-top: 25px;">
+                <div class="question-title">💬 سؤال الروبوت المحير: ما اسم الشيء الذي يجعل الشخصية تبدأ بالتصرف؟</div>
+                <div class="options-grid">
+                    <div class="option-card" onclick="checkFinalAnswer(this, false)">
+                        <span>حجم (Size)</span>
+                    </div>
+                    <div class="option-card" onclick="checkFinalAnswer(this, false)">
+                        <span>حركة (Motion)</span>
+                    </div>
+                    <div class="option-card" onclick="checkFinalAnswer(this, true)">
+                        <span>حَدَث (Event) ⭐</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= شاشة الاحتفال الكبرى بالنهاية ================= -->
+        <div class="screen" id="screen-celebration">
+            <h1 style="font-size: 40px; color: var(--success); margin-bottom: 5px;">🏆 أحسنت وبوركت! 🏆</h1>
+            <p class="hint" style="font-size: 22px;">أنت عبقري المبرمجين الصغار!</p>
+
+            <div class="certificate">
+                <div style="font-size: 70px;">🎓</div>
+                <h2 style="color: #D35400; margin: 15px 0;">شهادة المحقق البرمجي الذكي</h2>
+                <p style="font-size: 19px; line-height: 1.6; font-weight: bold; color: #34495E;">
+                    لقد اكتشفت سر من اسرار المبرمجين  :<br>
+                    <span style="background-color: #FEF9E7; padding: 10px 15px; border-radius: 12px; color: #D35400; display: inline-block; margin: 15px 0; border: 3px dashed #F1C40F;">
+                        "يحدث شيء أولاً (الحدث) ... ثم تستجيب الشخصية بالأفعال!"
+                    </span>
+                    <br>
+                    وهذا يسمى في لغتنا البرمجية: <strong>Event</strong>
+                </p>
+            </div>
+
+            <button class="btn" onclick="resetGame()" style="margin-top: 20px;">🔄 العب من جديد</button>
+        </div>
+
+    </div>
+
+    <script>
+        // نظام توليد الأصوات البسيطة مدمجاً للتفاعل
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        // تتبع الحالات الخاصة بالشارات (هل تم كسبها لمنع تضارب الألوان؟)
+        const earnedBadges = {
+            time: false,
+            maze: false,
+            click: false,
+            touch: false
+        };
+
+        function playSound(type) {
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'click') {
+                    osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.12);
+                } else if (type === 'correct') {
+                    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+                    osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1); // E5
+                    osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.2); // G5
+                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.4);
+                } else if (type === 'wrong') {
+                    osc.frequency.setValueAtTime(220, audioCtx.currentTime);
+                    osc.frequency.linearRampToValueAtTime(110, audioCtx.currentTime + 0.3);
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.35);
+                } else if (type === 'success') {
+                    const notes = [523, 587, 659, 698, 784, 880, 987, 1046];
+                    notes.forEach((freq, idx) => {
+                        const o = audioCtx.createOscillator();
+                        const g = audioCtx.createGain();
+                        o.connect(g);
+                        g.connect(audioCtx.destination);
+                        o.frequency.setValueAtTime(freq, audioCtx.currentTime + (idx * 0.08));
+                        g.gain.setValueAtTime(0.1, audioCtx.currentTime + (idx * 0.08));
+                        g.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + (idx * 0.08) + 0.15);
+                        o.start(audioCtx.currentTime + (idx * 0.08));
+                        o.stop(audioCtx.currentTime + (idx * 0.08) + 0.15);
+                    });
+                } else if (type === 'monkey') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                    osc.frequency.linearRampToValueAtTime(1500, audioCtx.currentTime + 0.15);
+                    gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.2);
+                } else if (type === 'frog') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.2);
+                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.25);
+                } else if (type === 'cat') {
+                    osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                    osc.frequency.quadraticRampToValueAtTime(900, audioCtx.currentTime + 0.15);
+                    osc.frequency.quadraticRampToValueAtTime(750, audioCtx.currentTime + 0.3);
+                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.35);
+                } else if (type === 'penguin') {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+                    osc.frequency.linearRampToValueAtTime(460, audioCtx.currentTime + 0.1);
+                    osc.frequency.linearRampToValueAtTime(400, audioCtx.currentTime + 0.2);
+                    gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.25);
+                }
+            } catch(e) {
+                console.log("Audio contextual restrictions applied.");
+            }
+        }
+
+        // تحديث حالة الشارات العلوية برمجياً حسب المرحلة النشطة
+        function updateBadgeBarProgress(currentBadgeId) {
+            const badges = ['time', 'maze', 'click', 'touch'];
+            
+            badges.forEach(bId => {
+                const el = document.getElementById(`badge-${bId}`);
+                if (!el) return;
+
+                // إذا كانت الشارة مكتسبة مسبقاً، تحافظ على حالتها الخضراء اللامعة
+                if (earnedBadges[bId]) {
+                    el.className = 'badge-slot earned';
+                } 
+                // إذا كانت هذه هي المرحلة النشطة حالياً، تضيء وتكبر
+                else if (bId === currentBadgeId) {
+                    el.className = 'badge-slot active';
+                } 
+                // بقية المراحل تظل مغلقة/رمادية
+                else {
+                    el.className = 'badge-slot';
+                }
+            });
+        }
+
+        // التنقل السلس والكرتوني بين الشاشات مع تفعيل مؤشر الشارات فوراً
+        function goToScreen(screenId) {
+            playSound('click');
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+            
+            // تحديد المرحلة وتحديث الشريط فور الدخول
+            if (screenId === 'screen-time') {
+                updateBadgeBarProgress('time');
+            } else if (screenId === 'screen-maze') {
+                updateBadgeBarProgress('maze');
+                initMaze();
+            } else if (screenId === 'screen-island') {
+                updateBadgeBarProgress('click');
+            } else if (screenId === 'screen-touch') {
+                updateBadgeBarProgress('touch');
+                initTouchTask();
+            } else if (screenId === 'screen-factory') {
+                // مصنع المفاجآت، تكون جميع الشارات مكتسبة مسبقاً
+                updateBadgeBarProgress(null);
+            }
+        }
+
+        // شارات البطل
+        function earnBadge(badgeId) {
+            earnedBadges[badgeId] = true;
+            const badgeElement = document.getElementById(`badge-${badgeId}`);
+            if (badgeElement) {
+                badgeElement.className = 'badge-slot earned';
+                playSound('success');
+                createConfettiAround(badgeElement);
+            }
+        }
+
+        // فحص إجابات الأسئلة المباشرة للمهام الأربعة الأولى (يضيف الرمز واللون تفاعلياً بعد النقر)
+        function checkAnswer(cardElement, isCorrect, badgeToEarn) {
+            const parent = cardElement.parentElement;
+            parent.querySelectorAll('.option-card').forEach(card => card.style.pointerEvents = 'none');
+            
+            // إزالة أي رموز مضافة سابقة تفادياً للتكرار
+            const existingInd = cardElement.querySelector('.dynamic-indicator');
+            if (existingInd) existingInd.remove();
+
+            // إنشاء مؤشر النتيجة الديناميكي
+            const indicator = document.createElement('span');
+            indicator.className = 'dynamic-indicator';
+
+            if (isCorrect) {
+                cardElement.classList.add('correct');
+                indicator.textContent = '✅';
+                cardElement.appendChild(indicator);
+                
+                playSound('correct');
+                createConfettiAround(cardElement);
+                
+                earnBadge(badgeToEarn);
+
+                if (badgeToEarn === 'time') {
+                    document.getElementById('btn-time-next').style.display = 'inline-flex';
+                } else if (badgeToEarn === 'maze') {
+                    document.getElementById('btn-maze-next').style.display = 'inline-flex';
+                } else if (badgeToEarn === 'click') {
+                    document.getElementById('btn-island-next').style.display = 'inline-flex';
+                } else if (badgeToEarn === 'touch') {
+                    document.getElementById('btn-touch-next').style.display = 'inline-flex';
+                }
+            } else {
+                cardElement.classList.add('wrong');
+                indicator.textContent = '❌';
+                cardElement.appendChild(indicator);
+                
+                playSound('wrong');
+                
+                // تصفير الاختيار الخاطئ بعد ثانية واحدة لإتاحة المحاولة مجدداً
+                setTimeout(() => {
+                    cardElement.classList.remove('wrong');
+                    indicator.remove();
+                    parent.querySelectorAll('.option-card').forEach(card => card.style.pointerEvents = 'auto');
+                }, 1200);
+            }
+        }
+
+        // ================= المهمة الأولى: لغز الوقت =================
+        function startTimeTask() {
+            playSound('click');
+            document.getElementById('btn-start-countdown').style.display = 'none';
+            const countdownEl = document.getElementById('countdown');
+            const robot = document.getElementById('robot-character');
+            
+            countdownEl.style.display = 'block';
+            let count = 3;
+            countdownEl.textContent = count;
+
+            const timer = setInterval(() => {
+                count--;
+                playSound('click');
+                if (count > 0) {
+                    countdownEl.textContent = count;
+                } else if (count === 0) {
+                    countdownEl.textContent = "💥 انطلق!";
+                } else {
+                    clearInterval(timer);
+                    countdownEl.style.display = 'none';
+                    
+                    robot.classList.add('jump-animation');
+                    playSound('success');
+                    createConfettiAround(robot);
+
+                    setTimeout(() => {
+                        robot.classList.remove('jump-animation');
+                        document.getElementById('time-question-hint').innerHTML = "رائع! لاحظ ماذا حدث وجاوب على السؤال أدناه 👇";
+                        document.getElementById('time-question').style.display = 'block';
+                        document.getElementById('time-question').scrollIntoView({ behavior: 'smooth' });
+                    }, 1200);
+                }
+            }, 1000);
+        }
+
+
+        // ================= المهمة الثانية: متاهة الأسهم =================
+        const mazeLayout = [
+            [0, 0, 1, 1, 1, 1],
+            [1, 0, 0, 0, 0, 1],
+            [1, 1, 1, 1, 0, 1],
+            [1, 0, 0, 0, 0, 0],
+            [1, 0, 1, 1, 1, 0],
+            [1, 1, 1, 1, 1, 0]
+        ];
+
+        let playerPos = { x: 0, y: 0 };
+        const targetPos = { x: 5, y: 5 };
+        let mazeCompleted = false;
+
+        function initMaze() {
+            mazeCompleted = false;
+            playerPos = { x: 0, y: 0 };
+            document.getElementById('maze-question').style.display = 'none';
+            document.getElementById('btn-maze-next').style.display = 'none';
+            renderMaze();
+        }
+
+        function renderMaze() {
+            const board = document.getElementById('maze-board');
+            board.innerHTML = '';
+            
+            for (let r = 0; r < 6; r++) {
+                for (let c = 0; c < 6; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'maze-cell';
+                    if (mazeLayout[r][c] === 1) {
+                        cell.classList.add('maze-wall');
+                        cell.textContent = '🧱';
+                    } else {
+                        cell.classList.add('maze-path');
+                    }
+
+                    if (r === playerPos.y && c === playerPos.x) {
+                        const p = document.createElement('div');
+                        p.className = 'player bounce-infinite';
+                        p.textContent = '🐭';
+                        cell.appendChild(p);
+                    } else if (r === targetPos.y && c === targetPos.x) {
+                        const t = document.createElement('div');
+                        t.className = 'target';
+                        t.textContent = '🧀';
+                        cell.appendChild(t);
+                    }
+                    board.appendChild(cell);
+                }
+            }
+        }
+
+        function movePlayer(dx, dy) {
+            if (mazeCompleted) return;
+            
+            const newX = playerPos.x + dx;
+            const newY = playerPos.y + dy;
+
+            if (newX >= 0 && newX < 6 && newY >= 0 && newY < 6) {
+                if (mazeLayout[newY][newX] === 0) {
+                    playerPos.x = newX;
+                    playerPos.y = newY;
+                    playSound('click');
+                    renderMaze();
+                    checkMazeWin();
+                } else {
+                    playSound('wrong'); 
+                }
+            }
+        }
+
+        // تم ضبط الاتجاهات تماماً: مفتاح يمين يحرك يميناً (زيادة x)، يسار يحرك يساراً (نقصان x)
+        window.addEventListener('keydown', (e) => {
+            if (document.getElementById('screen-maze').classList.contains('active')) {
+                if (e.key === 'ArrowUp' || e.key === 'w') { e.preventDefault(); movePlayer(0, -1); }
+                if (e.key === 'ArrowDown' || e.key === 's') { e.preventDefault(); movePlayer(0, 1); }
+                if (e.key === 'ArrowLeft' || e.key === 'a') { e.preventDefault(); movePlayer(-1, 0); } // يسار فعلي
+                if (e.key === 'ArrowRight' || e.key === 'd') { e.preventDefault(); movePlayer(1, 0); }  // يمين فعلي
+            }
+        });
+
+        function checkMazeWin() {
+            if (playerPos.x === targetPos.x && playerPos.y === targetPos.y) {
+                mazeCompleted = true;
+                playSound('success');
+                const board = document.getElementById('maze-board');
+                createConfettiAround(board);
+                
+                setTimeout(() => {
+                    document.getElementById('maze-question').style.display = 'block';
+                    document.getElementById('maze-question').scrollIntoView({ behavior: 'smooth' });
+                }, 800);
+            }
+        }
+
+
+        // ================= المهمة الثالثة: جزيرة المفاجآت =================
+        const clickedAnimals = {
+            monkey: false,
+            frog: false,
+            cat: false,
+            penguin: false
+        };
+
+        function triggerIslandAnimal(card, animalType, originalEmoji) {
+            clickedAnimals[animalType] = true;
+            playSound(animalType);
+            
+            const charEl = card.querySelector('.island-char');
+            
+            if (animalType === 'monkey') {
+                charEl.className = 'island-char dance';
+                charEl.textContent = '🐒';
+            } else if (animalType === 'frog') {
+                charEl.className = 'island-char jump';
+                charEl.textContent = '🐸';
+            } else if (animalType === 'cat') {
+                charEl.className = 'island-char speak';
+                charEl.textContent = '😸';
+            } else if (animalType === 'penguin') {
+                charEl.className = 'island-char spin';
+                charEl.textContent = '🐧';
+            }
+
+            setTimeout(() => {
+                charEl.className = 'island-char';
+                charEl.textContent = originalEmoji;
+            }, 1800);
+
+            const remainingCount = Object.values(clickedAnimals).filter(v => !v).length;
+            
+            const helperText = document.getElementById('island-interact-count');
+            if (remainingCount > 0) {
+                helperText.textContent = `متبقي لك استكشاف ${remainingCount} من الكائنات المضحكة!`;
+            } else {
+                helperText.textContent = "يا لك من مستكشف رائع! تم فتح السؤال السحري بالأسفل 👇";
+                document.getElementById('island-question').style.display = 'block';
+                document.getElementById('island-question').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+
+        // ================= المهمة الرابعة: لقاء الأصدقاء =================
+        let beePos = { x: 450, y: 100 };
+        let touchCompleted = false;
+
+        function initTouchTask() {
+            touchCompleted = false;
+            beePos = { x: 450, y: 100 };
+            document.getElementById('touch-question').style.display = 'none';
+            document.getElementById('btn-touch-next').style.display = 'none';
+            updateBeeElement();
+        }
+
+        function updateBeeElement() {
+            const bee = document.getElementById('bee');
+            bee.style.left = beePos.x + 'px';
+            bee.style.top = beePos.y + 'px';
+        }
+
+        function moveBee(dx, dy) {
+            if (touchCompleted) return;
+            
+            beePos.x = Math.max(10, Math.min(550, beePos.x + dx));
+            beePos.y = Math.max(10, Math.min(180, beePos.y + dy));
+            
+            updateBeeElement();
+            playSound('click');
+            checkTouchCollision();
+        }
+
+        // دعم السحب على الموبايل والماوس
+        const beeEl = document.getElementById('bee');
+        const touchZone = document.getElementById('touch-zone');
+        let isDragging = false;
+
+        beeEl.addEventListener('mousedown', startDrag);
+        beeEl.addEventListener('touchstart', startDrag, { passive: true });
+
+        window.addEventListener('mousemove', dragMove);
+        window.addEventListener('touchmove', dragMove, { passive: false });
+
+        window.addEventListener('mouseup', stopDrag);
+        window.addEventListener('touchend', stopDrag);
+
+        function startDrag(e) {
+            if (touchCompleted) return;
+            isDragging = true;
+            beeEl.style.cursor = 'grabbing';
+        }
+
+        function dragMove(e) {
+            if (!isDragging || touchCompleted) return;
+            if (e.type === 'touchmove') e.preventDefault();
+
+            const rect = touchZone.getBoundingClientRect();
+            let clientX, clientY;
+
+            if (e.type === 'touchmove') {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+
+            let x = clientX - rect.left - 25; 
+            let y = clientY - rect.top - 25;
+
+            beePos.x = Math.max(0, Math.min(rect.width - 50, x));
+            beePos.y = Math.max(0, Math.min(rect.height - 50, y));
+
+            updateBeeElement();
+            checkTouchCollision();
+        }
+
+        function stopDrag() {
+            isDragging = false;
+            beeEl.style.cursor = 'grab';
+        }
+
+        function checkTouchCollision() {
+            const flowerEl = document.getElementById('flower');
+            const dx = beePos.x - 20;
+            const dy = beePos.y - 170;
+            const distance = Math.sqrt(dx*dx + dy*dy);
+
+            if (distance < 60 && !touchCompleted) {
+                touchCompleted = true;
+                playSound('success');
+                
+                beeEl.classList.add('jump-animation');
+                flowerEl.classList.add('bounce-infinite');
+                
+                createConfettiAround(flowerEl);
+
+                setTimeout(() => {
+                    document.getElementById('touch-question').style.display = 'block';
+                    document.getElementById('touch-question').scrollIntoView({ behavior: 'smooth' });
+                }, 800);
+            }
+        }
+
+
+        // ================= المرحلة الأخيرة: مصنع المفاجآت =================
+        let selectedEvent = null;
+        let selectedAction = null;
+
+        function selectFactoryItem(type, id, element) {
+            playSound('click');
+            if (type === 'event') {
+                selectedEvent = id;
+                document.querySelectorAll('#event-cards .game-card').forEach(c => c.classList.remove('selected'));
+                element.classList.add('selected');
+            } else {
+                selectedAction = id;
+                document.querySelectorAll('#action-cards .game-card').forEach(c => c.classList.remove('selected'));
+                element.classList.add('selected');
+            }
+
+            updateRecipeUI();
+        }
+
+        function updateRecipeUI() {
+            const recipeText = document.getElementById('recipe-text');
+            if (selectedEvent && selectedAction) {
+                let eventStr = '';
+                let actionStr = '';
+
+                if (selectedEvent === 'time') eventStr = "⏰ بعد مرور 3 ثوانٍ";
+                if (selectedEvent === 'click') eventStr = "🖱️ عند النقر فوق الضفدع";
+                if (selectedEvent === 'touch') eventStr = "🤝 عند تلامس شخصيتين";
+
+                if (selectedAction === 'jump') actionStr = "🐸 يقفز الضفدع اللطيف";
+                if (selectedAction === 'balloon') actionStr = "🎈 يظهر بالون زاهي";
+                if (selectedAction === 'star') actionStr = "✨ يملأ المكان بالنجوم";
+                if (selectedAction === 'sound') actionStr = "🎵 يصدر نغمة موسيقية ملهمة";
+
+                recipeText.innerHTML = `🌟 كودك السحري المكتوب:<br><strong>${eventStr} 👈 سأقوم بـ [ ${actionStr} ]</strong>`;
+            } else {
+                recipeText.textContent = "اختر حدثاً وفعلاً من الأعلى لتوليد الكود البرمجي السحري!";
+            }
+        }
+
+        let runCount = 0; 
+        function runFactoryTest() {
+            if (!selectedEvent || !selectedAction) {
+                alert("من فضلك اختر حَدَثـاً واحداً وفِعْلاً واحداً أولاً لتبدأ التجربة!");
+                return;
+            }
+
+            const sandbox = document.getElementById('sandbox');
+            const character = document.getElementById('sandbox-character');
+            
+            character.className = 'sandbox-char';
+            character.textContent = '🐸'; // البطل هنا هو الضفدع دائماً
+            character.style.display = 'block';
+
+            const oldExtras = sandbox.querySelectorAll('.extra-node');
+            oldExtras.forEach(node => node.remove());
+
+            if (selectedEvent === 'time') {
+                character.textContent = '⏳';
+                setTimeout(() => {
+                    executeAction(selectedAction);
+                }, 3000);
+            } 
+            else if (selectedEvent === 'click') {
+                character.style.cursor = 'pointer';
+                character.onclick = function() {
+                    executeAction(selectedAction);
+                    character.onclick = null; 
+                };
+            } 
+            else if (selectedEvent === 'touch') {
+                const balloon = document.createElement('div');
+                balloon.className = 'extra-node bounce-infinite';
+                balloon.style.position = 'absolute';
+                balloon.style.left = '10px';
+                balloon.style.fontSize = '45px';
+                balloon.textContent = '🎈';
+                balloon.style.transition = 'left 2s linear';
+                sandbox.appendChild(balloon);
+
+                setTimeout(() => {
+                    balloon.style.left = '220px'; 
+                }, 100);
+
+                setTimeout(() => {
+                    executeAction(selectedAction);
+                }, 2100);
+            }
+        }
+
+        function executeAction(action) {
+            const sandbox = document.getElementById('sandbox');
+            const character = document.getElementById('sandbox-character');
+
+            // تظل الشخصية ضفدع في كل الأحوال للتوافق
+            character.textContent = '🐸'; 
+
+            if (action === 'jump') {
+                character.classList.add('jump-animation');
+                playSound('frog');
+                setTimeout(() => {
+                    character.classList.remove('jump-animation');
+                }, 1200);
+            } 
+            else if (action === 'balloon') {
+                const b = document.createElement('div');
+                b.className = 'extra-node';
+                b.textContent = '🎈';
+                b.style.fontSize = '55px';
+                b.style.position = 'absolute';
+                b.style.bottom = '10px';
+                b.style.animation = 'float-sparkle 2.5s ease-out forwards';
+                b.style.setProperty('--mx', '0px');
+                b.style.setProperty('--my', '-140px');
+                sandbox.appendChild(b);
+                playSound('success');
+            } 
+            else if (action === 'star') {
+                playSound('correct');
+                for (let i = 0; i < 10; i++) {
+                    const star = document.createElement('div');
+                    star.className = 'extra-node sparkle-fx';
+                    star.textContent = '✨';
+                    star.style.left = (Math.random() * 80 + 10) + '%';
+                    star.style.top = (Math.random() * 60 + 20) + '%';
+                    star.style.setProperty('--mx', (Math.random() * 120 - 60) + 'px');
+                    star.style.setProperty('--my', (Math.random() * -120 - 30) + 'px');
+                    sandbox.appendChild(star);
+                }
+            } 
+            else if (action === 'sound') {
+                character.textContent = '🎶🐸🎶';
+                playSound('success');
+                setTimeout(() => character.textContent = '🐸', 1600);
+            }
+
+            runCount++;
+            if (runCount >= 2) {
+                setTimeout(() => {
+                    document.getElementById('final-discovery-box').style.display = 'block';
+                    document.getElementById('final-discovery-box').scrollIntoView({ behavior: 'smooth' });
+                }, 1500);
+            }
+        }
+
+        function checkFinalAnswer(cardElement, isCorrect) {
+            const parent = cardElement.parentElement;
+            parent.querySelectorAll('.option-card').forEach(card => card.style.pointerEvents = 'none');
+
+            // إزالة أي رموز سابقة مضافة
+            const existingInd = cardElement.querySelector('.dynamic-indicator');
+            if (existingInd) existingInd.remove();
+
+            const indicator = document.createElement('span');
+            indicator.className = 'dynamic-indicator';
+
+            if (isCorrect) {
+                cardElement.classList.add('correct');
+                indicator.textContent = '✅';
+                cardElement.appendChild(indicator);
+                
+                playSound('success');
+                
+                setTimeout(() => {
+                    goToScreen('screen-celebration');
+                    startMassiveFireworks();
+                }, 1200);
+            } else {
+                cardElement.classList.add('wrong');
+                indicator.textContent = '❌';
+                cardElement.appendChild(indicator);
+                
+                playSound('wrong');
+                
+                setTimeout(() => {
+                    cardElement.classList.remove('wrong');
+                    indicator.remove();
+                    parent.querySelectorAll('.option-card').forEach(card => card.style.pointerEvents = 'auto');
+                }, 1200);
+            }
+        }
+
+        // ================= نظام الاحتفالات والمؤثرات البصرية =================
+        function createConfettiAround(element) {
+            const rect = element.getBoundingClientRect();
+            const container = document.getElementById('game-window');
+            const containerRect = container.getBoundingClientRect();
+            
+            const x = rect.left - containerRect.left + (rect.width / 2);
+            const y = rect.top - containerRect.top + (rect.height / 2);
+
+            const emojis = ['⭐', '✨', '🎉', '🎈', '🎨', '🧁', '🍦'];
+            for (let i = 0; i < 18; i++) {
+                const conf = document.createElement('div');
+                conf.className = 'sparkle-fx';
+                conf.style.position = 'absolute';
+                conf.style.left = x + 'px';
+                conf.style.top = y + 'px';
+                conf.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                
+                const mx = (Math.random() * 240 - 120) + 'px';
+                const my = (Math.random() * -240 - 60) + 'px';
+                conf.style.setProperty('--mx', mx);
+                conf.style.setProperty('--my', my);
+                
+                container.appendChild(conf);
+                setTimeout(() => conf.remove(), 1200);
+            }
+        }
+
+        let fireworkTimer;
+        function startMassiveFireworks() {
+            fireworkTimer = setInterval(() => {
+                const container = document.getElementById('game-window');
+                const x = Math.random() * container.clientWidth;
+                const y = Math.random() * (container.clientHeight - 200) + 100;
+                
+                const colors = ['#FF477E', '#FFB000', '#2ED573', '#1E90FF', '#9B5DE5', '#F1C40F'];
+                const randomColor = colors[Math.floor(Math.random() * colors.length)];
+
+                for (let i = 0; i < 22; i++) {
+                    const fw = document.createElement('div');
+                    fw.className = 'firework';
+                    fw.style.background = randomColor;
+                    fw.style.left = x + 'px';
+                    fw.style.top = y + 'px';
+
+                    const angle = Math.random() * Math.PI * 2;
+                    const distance = Math.random() * 150 + 40;
+                    const tx = (Math.cos(angle) * distance) + 'px';
+                    const ty = (Math.sin(angle) * distance) + 'px';
+
+                    fw.style.setProperty('--tx', tx);
+                    fw.style.setProperty('--ty', ty);
+
+                    container.appendChild(fw);
+                    setTimeout(() => fw.remove(), 1000);
+                }
+                playSound('click'); 
+            }, 500);
+        }
+
+        // تصفير وإعادة اللعبة وتنظيف أي عناصر ديناميكية
+        function resetGame() {
+            clearInterval(fireworkTimer);
+            
+            // تصفير الحالات بالكامل
+            for (let b in earnedBadges) {
+                earnedBadges[b] = false;
+            }
+            document.querySelectorAll('.badge-slot').forEach(b => {
+                b.className = 'badge-slot';
+            });
+            
+            clickedAnimals.monkey = false;
+            clickedAnimals.frog = false;
+            clickedAnimals.cat = false;
+            clickedAnimals.penguin = false;
+            document.getElementById('island-interact-count').textContent = "قم بالنقر واستكشافهم جميعاً لتفعيل السؤال!";
+            document.getElementById('island-question').style.display = 'none';
+            document.getElementById('btn-island-next').style.display = 'none';
+
+            selectedEvent = null;
+            selectedAction = null;
+            runCount = 0;
+            document.querySelectorAll('.game-card').forEach(c => c.classList.remove('selected'));
+            document.getElementById('recipe-text').textContent = "اختر حدثاً وفعلاً من الأعلى لتوليد الكود البرمجي السحري!";
+            document.getElementById('final-discovery-box').style.display = 'none';
+            
+            // تنظيف الخيارات بالكامل وإزالة رموز الإجابة المضافة حركياً
+            document.querySelectorAll('.option-card').forEach(card => {
+                card.classList.remove('correct', 'wrong');
+                card.style.pointerEvents = 'auto';
+                const indicator = card.querySelector('.dynamic-indicator');
+                if (indicator) indicator.remove();
+            });
+            
+            document.getElementById('btn-start-countdown').style.display = 'inline-flex';
+            document.getElementById('time-question').style.display = 'none';
+            document.getElementById('btn-time-next').style.display = 'none';
+
+            goToScreen('screen-intro');
+        }
+    </script>
+</body>
+</html>
