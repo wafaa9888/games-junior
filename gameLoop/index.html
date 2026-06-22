@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مهمة الطائرة ✈️</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Tajawal', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#0284c7',
+                        secondary: '#8b5cf6',
+                        accent: '#f59e0b',
+                        success: '#10b981',
+                        skybg: '#e0f2fe',
+                        runway: '#fef08a'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #f0f9ff;
+            touch-action: manipulation;
+            user-select: none;
+        }
+
+        .game-container {
+            max-width: 750px;
+            margin: 0 auto;
+        }
+
+        /* حاوية الخارطة الموحدة والثابتة - تم إجبار اتجاهها ليكون اليسار لليمين ليتطابق مع إحداثيات تموضع الطائرة */
+        #grid-container {
+            position: relative;
+            direction: ltr !important; 
+            background-color: #bae6fd; 
+            background-image: radial-gradient(rgba(255, 255, 255, 0.4) 15%, transparent 15%);
+            background-size: 30px 30px;
+            border: 6px solid #38bdf8;
+            border-radius: 28px;
+            overflow: hidden;
+            box-shadow: 0 20px 30px -10px rgba(14, 165, 233, 0.4);
+        }
+
+        /* تقسيم الشبكة الثابتة */
+        .grid-board {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            width: 100%;
+            aspect-ratio: 9 / 8;
+        }
+
+        /* مربعات الشبكة */
+        .cell {
+            border: 1px dashed rgba(56, 189, 248, 0.35);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-sizing: border-box;
+        }
+
+        /* ممر الهبوط الذهبي الموحد للرحلة كاملة */
+        .runway-cell {
+            background-color: #fef08a;
+            border: 2px solid #facc15;
+            box-shadow: inset 0 0 8px rgba(250, 204, 21, 0.3);
+            transition: background-color 0.3s;
+        }
+
+        /* خط ممر الهبوط المقطع */
+        .runway-cell::before {
+            content: '';
+            position: absolute;
+            width: 35%;
+            height: 4px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 2px;
+            z-index: 1;
+        }
+
+        /* محطة الانطلاق (البداية) */
+        .start-cell {
+            background-color: #bbf7d0 !important;
+            border: 3px solid #22c55e !important;
+        }
+        .start-cell::before { display: none; }
+
+        /* محطة الوصول النهائية */
+        .end-cell {
+            background-color: #fef08a !important;
+            border: 3px solid #eab308 !important;
+        }
+        .end-cell::before { display: none; }
+
+        /* حلقة إرشادية مضيئة للمحطة الحالية النشطة */
+        .active-checkpoint-ring {
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.6), inset 0 0 12px rgba(239, 68, 68, 0.4);
+            animation: pulse-ring 1.5s infinite;
+        }
+
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0px rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0px rgba(239, 68, 68, 0); }
+        }
+
+        /* علامة السهم/الهدف في نهاية المسار */
+        .target-marker {
+            font-size: 1.8rem;
+            animation: bounce 1.4s infinite ease-in-out;
+            z-index: 5;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
+        }
+
+        /* الطائرة الكرتونية المتحركة بسلاسة فائقة */
+        #plane {
+            position: absolute;
+            width: calc(100% / 9);
+            height: calc(100% / 8);
+            transition: left 0.8s cubic-bezier(0.25, 1, 0.5, 1), top 0.8s cubic-bezier(0.25, 1, 0.5, 1), transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            padding: 6px;
+            pointer-events: none;
+            box-sizing: border-box;
+        }
+
+        #plane svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0px 8px 8px rgba(15, 23, 42, 0.3));
+        }
+
+        /* أزرار الأوامر الكرتونية ثلاثية الأبعاد */
+        .cmd-btn {
+            transition: transform 0.1s, box-shadow 0.1s;
+            box-shadow: 0 6px 0px rgba(0,0,0,0.12);
+        }
+        .cmd-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0px rgba(0,0,0,0.12);
+        }
+
+        /* التنبيه اللطيف للأخطاء */
+        #toast {
+            position: fixed;
+            bottom: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #f59e0b;
+            color: white;
+            padding: 12px 28px;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            opacity: 0;
+            transition: bottom 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
+            z-index: 100;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+            border: 2px solid #d97706;
+        }
+        #toast.show {
+            bottom: 24px;
+            opacity: 1;
+        }
+
+        .modal-overlay {
+            background-color: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(5px);
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9) translateY(15px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-8px) scale(1.08); }
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col pt-4 px-4 pb-8">
+
+    <div class="game-container w-full flex-grow flex flex-col">
+        
+        <!-- الترويسة العلوية والمؤشرات -->
+        <header class="text-center mb-3">
+            <h1 class="text-4xl font-extrabold text-sky-600 mb-2 drop-shadow-sm flex items-center justify-center gap-2">
+                <span>✈️</span> مهمة الطائرة
+            </h1>
+            <div class="flex justify-center gap-3">
+                <div class="inline-flex items-center gap-2 bg-white px-5 py-1.5 rounded-full shadow-md border border-sky-100 text-sky-800 font-extrabold text-md text-right">
+                    <span class="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse"></span>
+                    المرحلة <span id="current-stage-display">1</span> من 4
+                </div>
+                <button id="sound-toggle" onclick="toggleSound()" class="bg-white hover:bg-slate-50 px-4 py-1.5 rounded-full shadow-md border border-sky-100 text-sky-700 font-bold text-sm flex items-center gap-1.5 transition-all">
+                    <span id="sound-icon">🔊</span> صوت اللعبة
+                </button>
+            </div>
+        </header>
+
+        <!-- صندوق المساعدة والتوجيه للأطفال -->
+        <div class="text-center mb-3">
+            <p id="helper-text" class="text-md md:text-lg font-bold text-sky-800 bg-sky-50 inline-block px-5 py-2.5 rounded-2xl border border-sky-100 shadow-sm max-w-full">
+                ساعد الطائرة للوصول إلى محطة التوقف الأولى على المسار الذهبي! 🎯
+            </p>
+        </div>
+
+        <!-- منطقة اللعبة (الخارطة الثابتة والشبكة) -->
+        <main class="flex-grow flex flex-col items-center justify-center mb-4">
+            <div id="grid-container" class="w-full max-w-[480px]">
+                <!-- شبكة اللعب الموحدة -->
+                <div id="grid" class="grid-board"></div>
+                
+                <!-- مجسم الطائرة الكرتوني المتناسق مع الاتجاهات -->
+                <div id="plane">
+                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- مروحة الطائرة الأمامية الدوارة -->
+                        <ellipse cx="50" cy="12" rx="18" ry="4" fill="#ef4444"/>
+                        <circle cx="50" cy="12" r="3" fill="#ffffff"/>
+                        
+                        <!-- جسم الطائرة الرئيسي بلون أزرق زاهٍ متكامل -->
+                        <path d="M50,12 C35,38 38,78 50,85 C62,78 65,38 50,12 Z" fill="#3b82f6" stroke="#1d4ed8" stroke-width="4" stroke-linejoin="round"/>
+                        
+                        <!-- الجناح الأيمن مع حواف حمراء تفاعلية -->
+                        <path d="M50,42 L88,46 C93,46.5 94,52 89,54 L50,50 Z" fill="#60a5fa" stroke="#1d4ed8" stroke-width="3" stroke-linejoin="round"/>
+                        <path d="M72,44 L80,45 L76,51 L68,50 Z" fill="#ef4444"/>
+                        
+                        <!-- الجناح الأيسر مع حواف حمراء تفاعلية -->
+                        <path d="M50,42 L12,46 C7,46.5 6,52 11,54 L50,50 Z" fill="#60a5fa" stroke="#1d4ed8" stroke-width="3" stroke-linejoin="round"/>
+                        <path d="M28,44 L20,45 L24,51 L32,50 Z" fill="#ef4444"/>
+                        
+                        <!-- زعانف التوجيه الخلفية للذيل -->
+                        <path d="M32,78 L50,73 L68,78 L50,84 Z" fill="#ef4444" stroke="#b91c1c" stroke-width="3" stroke-linejoin="round"/>
+                        
+                        <!-- قمرة القيادة اللامعة والبارزة -->
+                        <path d="M42,28 Q50,18 58,28 Q50,36 42,28 Z" fill="#e0f2fe" stroke="#1d4ed8" stroke-width="3" stroke-linejoin="round"/>
+                        <path d="M45,24 L48,26" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </div>
+            </div>
+        </main>
+
+        <!-- منطقة الأزرار البرمجية التفاعلية -->
+        <section id="controls" class="bg-white rounded-3xl shadow-xl p-4 border-2 border-sky-100 mb-2">
+            <h2 class="text-center text-slate-400 font-extrabold mb-4 text-xs uppercase tracking-wider">لوحة البرمجة: اضغط على الزر الصحيح لتحريك الطائرة</h2>
+            <div id="buttons-container" class="flex flex-wrap justify-center gap-6">
+                <!-- يتم توليد الأزرار بشكل ديناميكي لكل مرحلة بناءً على الأوامر المسموحة -->
+            </div>
+        </section>
+
+    </div>
+
+    <!-- التنبيه اللطيف للأخطاء -->
+    <div id="toast" class="flex items-center gap-2">
+        <span>💡</span> جرّب أمرًا آخر.
+    </div>
+
+    <!-- نافذة الأسئلة وردود الأفعال التفاعلية -->
+    <div id="question-modal" class="fixed inset-0 modal-overlay flex items-center justify-center z-50 hidden px-4">
+        <div class="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl text-center fade-in border-4 border-blue-400">
+            
+            <!-- محتوى السؤال -->
+            <div id="question-content" class="hidden">
+                <div class="text-5xl mb-3">🤔</div>
+                <h3 id="question-text" class="text-xl md:text-2xl font-bold text-slate-800 mb-6 leading-relaxed"></h3>
+                <div id="options-container" class="flex justify-center gap-4 flex-row-reverse">
+                    <!-- خيارات الإجابة الثلاثة -->
+                </div>
+            </div>
+
+            <!-- التغذية الراجعة الفورية -->
+            <div id="feedback-content" class="hidden">
+                <div id="feedback-icon" class="text-6xl mb-3 animate-bounce">🎉</div>
+                <h3 id="feedback-title" class="text-3xl font-extrabold mb-2"></h3>
+                <p id="feedback-message" class="text-lg text-slate-600 mb-6 leading-relaxed font-bold"></p>
+                <button id="btn-continue" class="bg-sky-500 hover:bg-sky-600 text-white text-xl font-bold py-3.5 px-8 rounded-full shadow-lg transition-transform active:scale-95 w-full border-b-4 border-sky-700">
+                    متابعة 🚀
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- شاشة نهاية الرحلة الموحدة بنجاح -->
+    <div id="end-modal" class="fixed inset-0 modal-overlay flex items-center justify-center z-50 hidden px-4">
+        <div class="bg-white w-full max-w-md rounded-3xl p-8 shadow-2xl text-center fade-in border-4 border-yellow-400">
+            <div class="text-7xl mb-4">🏆</div>
+            <h2 class="text-3xl font-extrabold text-slate-800 mb-4">أحسنت البطل الصغير!</h2>
+            <p class="text-xl text-slate-600 font-bold mb-4 leading-relaxed">
+                لقد أوصلت الطائرة إلى وجهتها النهائية بنجاح!
+            </p>
+            <div class="bg-sky-50 rounded-2xl p-5 mb-6 border border-sky-200 text-right" dir="rtl">
+                <p class="text-lg text-sky-900 font-bold leading-relaxed">
+                    هل لاحظت أن بعض أوامر البرمجة قمت بالضغط عليها واستعمالها عدة مرات متتالية لإكمال الطيران؟
+                </p>
+                <p class="text-lg text-sky-900 font-bold mt-3 leading-relaxed">
+                    سنكتشف في الدرس القادم طريقة ذكية تساعدنا عندما تتشابه الأوامر كثيرًا! 😉🚀
+                </p>
+            </div>
+            <button onclick="location.reload()" class="bg-yellow-400 hover:bg-yellow-500 text-yellow-950 text-xl font-bold py-4 px-8 rounded-full shadow-lg transition-transform active:scale-95 w-full border-b-4 border-yellow-600">
+                العب من جديد ✈️
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // إعدادات الصوت الاختيارية (باستخدام متصفح الويب مباشرة دون ملفات خارجية)
+        let soundEnabled = true;
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'click') {
+                    osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.15);
+                } else if (type === 'success') {
+                    // نغمات متصاعدة تعطي شعور الفوز والبهجة
+                    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                    notes.forEach((freq, i) => {
+                        const o = audioCtx.createOscillator();
+                        const g = audioCtx.createGain();
+                        o.connect(g);
+                        g.connect(audioCtx.destination);
+                        o.frequency.setValueAtTime(freq, audioCtx.currentTime + i * 0.1);
+                        g.gain.setValueAtTime(0.08, audioCtx.currentTime + i * 0.1);
+                        g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i * 0.1 + 0.2);
+                        o.start(audioCtx.currentTime + i * 0.1);
+                        o.stop(audioCtx.currentTime + i * 0.1 + 0.2);
+                    });
+                } else if (type === 'error') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.25);
+                }
+            } catch (e) {
+                console.log("Audio play error", e);
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            document.getElementById('sound-icon').innerText = soundEnabled ? '🔊' : '🔇';
+        }
+
+        // تحديد كامل المسار الموحد على الشبكة 9×8 (أعمدة x تتراوح من 0 لـ 8، صفوف y تتراوح من 0 لـ 7)
+        // المسار متصل بالكامل من البداية (0, 1) حتى النهاية (7, 6)
+        const fullRunwayPath = [
+            // ممر المرحلة 1 (يتجه لليمين/الشرق)
+            {x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 1}, {x: 3, y: 1}, 
+            // ممر المرحلة 3 (ينزل للأسفل/الجنوب)
+            {x: 3, y: 2}, {x: 3, y: 3}, {x: 3, y: 4}, {x: 3, y: 5}, {x: 3, y: 6},
+            // ممر المرحلة 4 (يتجه لليمين/الشرق)
+            {x: 4, y: 6}, {x: 5, y: 6}, {x: 6, y: 6}, {x: 7, y: 6}
+        ];
+
+        // تفاصيل المراحل الأربعة المترابطة خطوة بخطوة
+        const stages = [
+            {
+                id: 1,
+                start: { x: 0, y: 1, dir: 90 }, 
+                target: { x: 3, y: 1 }, 
+                commands: ['moveForward', 'moveForward', 'moveForward'], 
+                buttons: ['moveForward'], 
+                helper: "ساعد الطائرة بالتحرك للأمام لتصل إلى محطة التوقف الأولى 🚩",
+                questions: [
+                    {
+                        text: "كم مرة استعملت الأمر moveForward؟",
+                        options: [2, 3, 4],
+                        answer: 3,
+                        cmd: "moveForward"
+                    }
+                ]
+            },
+            {
+                id: 2,
+                start: { x: 3, y: 1, dir: 90 },
+                target: { x: 3, y: 1 }, 
+                commands: ['turnRight'],
+                // تم عرض زر turnLeft وزر turnRight معاً لمساعدة الطفل على الملاحظة واكتشاف الزر الصحيح
+                buttons: ['turnLeft', 'turnRight'], 
+                helper: "وجّه الطائرة لتدور وتواجه المسار الممتد لأسفل الخارطة! 🧭",
+                questions: [
+                    {
+                        text: "كم مرة استعملت الأمر turnRight؟",
+                        options: [1, 2, 3],
+                        answer: 1,
+                        cmd: "turnRight"
+                    }
+                ]
+            },
+            {
+                id: 3,
+                start: { x: 3, y: 1, dir: 180 },
+                target: { x: 3, y: 6 }, 
+                commands: ['moveForward', 'moveForward', 'moveForward', 'moveForward', 'moveForward'],
+                buttons: ['moveForward'],
+                helper: "حرّك الطائرة للأمام لتتبع هذا المسار الطويل وتصل للمحطة التالية 🚩!",
+                questions: [
+                    {
+                        text: "كم مرة استعملت الأمر moveForward؟",
+                        options: [3, 4, 5],
+                        answer: 5,
+                        cmd: "moveForward"
+                    }
+                ]
+            },
+            {
+                id: 4,
+                start: { x: 3, y: 6, dir: 180 },
+                target: { x: 7, y: 6 }, 
+                commands: ['turnLeft', 'moveForward', 'moveForward', 'moveForward', 'moveForward'],
+                buttons: ['turnLeft', 'moveForward'],
+                helper: "وجّه الطائرة بالانعطاف أولاً، ثم حرّكها للأمام حتى تصل للمطار النهائي 🏁🎯!",
+                questions: [
+                    {
+                        text: "كم مرة استعملت الأمر turnLeft؟",
+                        options: [1, 2, 3],
+                        answer: 1,
+                        cmd: "turnLeft"
+                    },
+                    {
+                        text: "كم مرة استعملت الأمر moveForward؟",
+                        options: [3, 4, 5],
+                        answer: 4,
+                        cmd: "moveForward"
+                    }
+                ]
+            }
+        ];
+
+        let currentStageIndex = 0;
+        let currentStepIndex = 0;
+        let planeState = { x: 0, y: 1, dir: 90 }; 
+        let commandCounters = { moveForward: 0, turnLeft: 0, turnRight: 0 };
+        let currentQuestionIndex = 0;
+        let isAnimating = false;
+
+        const gridEl = document.getElementById('grid');
+        const planeEl = document.getElementById('plane');
+        const buttonsContainer = document.getElementById('buttons-container');
+        const stageDisplayEl = document.getElementById('current-stage-display');
+        const helperTextEl = document.getElementById('helper-text');
+        const toastEl = document.getElementById('toast');
+        
+        const modalEl = document.getElementById('question-modal');
+        const questionContentEl = document.getElementById('question-content');
+        const feedbackContentEl = document.getElementById('feedback-content');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        
+        const feedbackIconEl = document.getElementById('feedback-icon');
+        const feedbackTitleEl = document.getElementById('feedback-title');
+        const feedbackMessageEl = document.getElementById('feedback-message');
+        const btnContinue = document.getElementById('btn-continue');
+        
+        const endModalEl = document.getElementById('end-modal');
+
+        // بناء الشبكة الثابتة الموحدة عند بدء تشغيل اللعبة
+        function initGrid() {
+            gridEl.innerHTML = '';
+            
+            for (let y = 0; y < 8; y++) {
+                for (let x = 0; x < 9; x++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.x = x;
+                    cell.dataset.y = y;
+
+                    // التحقق مما إذا كانت الخلية جزءًا من مسار الرحلة الكامل والذهبي
+                    const isOnPath = fullRunwayPath.some(p => p.x === x && p.y === y);
+                    if (isOnPath) {
+                        cell.classList.add('runway-cell');
+                    }
+
+                    // تمييز نقطة البداية الأولى والنهائية والمحطات
+                    if (x === 0 && y === 1) {
+                        cell.classList.add('start-cell');
+                        cell.innerHTML = `
+                            <span class="text-xs font-extrabold text-green-700 select-none" dir="rtl">🛫 البداية</span>
+                        `;
+                    } else if (x === 7 && y === 6) {
+                        cell.classList.add('end-cell');
+                        cell.innerHTML = `
+                            <span class="text-xs font-extrabold text-amber-800 select-none z-10" dir="rtl">🛬 النهاية</span>
+                            <div class="target-marker absolute">🎯</div>
+                        `;
+                    } else if ((x === 3 && y === 1) || (x === 3 && y === 6)) {
+                        cell.innerHTML = `
+                            <span class="text-xs select-none">🚩</span>
+                        `;
+                    }
+
+                    gridEl.appendChild(cell);
+                }
+            }
+        }
+
+        // تحميل وتحديث حالة الرحلة بحسب المرحلة الحالية
+        function loadStage(index) {
+            const stage = stages[index];
+            stageDisplayEl.innerText = stage.id;
+            helperTextEl.innerText = stage.helper;
+            currentStepIndex = 0;
+            currentQuestionIndex = 0;
+            
+            // تصفير عدادات الأزرار لبدء العد من جديد في المرحلة الحالية
+            commandCounters = { moveForward: 0, turnLeft: 0, turnRight: 0 };
+            
+            // في كل مرحلة جديدة، تبدأ الطائرة تماماً من حيث توقفت في المرحلة السابقة
+            if (index === 0) {
+                planeState = { ...stage.start };
+            } else {
+                planeState.dir = stage.start.dir;
+            }
+
+            updatePlanePosition();
+            updateActiveCheckpointHighlight(stage);
+            renderButtons(stage);
+        }
+
+        // تحديث المربع الإرشادي النشط حالياً لتوجيه ذهن الطفل
+        function updateActiveCheckpointHighlight(stage) {
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(c => c.classList.remove('active-checkpoint-ring'));
+
+            const targetCell = Array.from(gridEl.children).find(c => 
+                parseInt(c.dataset.x) === stage.target.x && parseInt(c.dataset.y) === stage.target.y
+            );
+            
+            if (targetCell) {
+                targetCell.classList.add('active-checkpoint-ring');
+            }
+        }
+
+        function updatePlanePosition() {
+            const leftPercent = (planeState.x / 9) * 100;
+            const topPercent = (planeState.y / 8) * 100;
+            
+            planeEl.style.left = `${leftPercent}%`;
+            planeEl.style.top = `${topPercent}%`;
+            planeEl.style.transform = `rotate(${planeState.dir}deg)`;
+        }
+
+        // رسم أزرار الأوامر كبطاقات برمجية جميلة ومخصصة للمرحلة الحالية فقط
+        function renderButtons(stage) {
+            buttonsContainer.innerHTML = '';
+            
+            const btnStyles = {
+                'moveForward': { color: 'bg-blue-500 hover:bg-blue-600', border: 'border-blue-700' },
+                'turnLeft': { color: 'bg-purple-500 hover:bg-purple-600', border: 'border-purple-700' },
+                'turnRight': { color: 'bg-orange-500 hover:bg-orange-600', border: 'border-orange-700' }
+            };
+
+            stage.buttons.forEach(cmd => {
+                const btnBox = document.createElement('div');
+                btnBox.className = 'flex flex-col items-center';
+
+                const btn = document.createElement('button');
+                btn.className = `cmd-btn ${btnStyles[cmd].color} text-white font-extrabold text-lg py-3.5 px-7 rounded-2xl border-b-4 ${btnStyles[cmd].border} tracking-wide`;
+                btn.innerText = cmd;
+                btn.onclick = () => handleCommandClick(cmd);
+                
+                const counterDisplay = document.createElement('div');
+                counterDisplay.id = `counter-${cmd}`;
+                counterDisplay.className = 'mt-2 text-slate-500 font-extrabold bg-slate-100 px-4 py-1 rounded-full text-xs border border-slate-200 shadow-inner';
+                counterDisplay.innerText = `العدد: 0`;
+
+                btnBox.appendChild(btn);
+                btnBox.appendChild(counterDisplay);
+                buttonsContainer.appendChild(btnBox);
+            });
+        }
+
+        function handleCommandClick(cmd) {
+            if (isAnimating) return; 
+            
+            const stage = stages[currentStageIndex];
+            const expectedCmd = stage.commands[currentStepIndex];
+
+            if (cmd === expectedCmd) {
+                playSound('click');
+                executeCommand(cmd);
+                
+                commandCounters[cmd]++;
+                const counterEl = document.getElementById(`counter-${cmd}`);
+                if (counterEl) {
+                    counterEl.innerText = `العدد: ${commandCounters[cmd]}`;
+                }
+                
+                currentStepIndex++;
+                isAnimating = true;
+                setTimeout(() => { isAnimating = false; }, 800); 
+
+                if (currentStepIndex >= stage.commands.length) {
+                    setTimeout(() => {
+                        playSound('success');
+                        startQuestions();
+                    }, 1000);
+                }
+            } else {
+                playSound('error');
+                showToast();
+            }
+        }
+
+        function executeCommand(cmd) {
+            if (cmd === 'turnLeft') {
+                planeState.dir -= 90;
+            } else if (cmd === 'turnRight') {
+                planeState.dir += 90;
+            } else if (cmd === 'moveForward') {
+                let normalizedDir = planeState.dir % 360;
+                if (normalizedDir < 0) normalizedDir += 360;
+
+                if (normalizedDir === 0) planeState.y -= 1;
+                else if (normalizedDir === 90) planeState.x += 1;
+                else if (normalizedDir === 180) planeState.y += 1;
+                else if (normalizedDir === 270) planeState.x -= 1;
+            }
+            updatePlanePosition();
+        }
+
+        let toastTimeout;
+        function showToast() {
+            toastEl.classList.add('show');
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toastEl.classList.remove('show');
+            }, 2000);
+        }
+
+        function startQuestions() {
+            modalEl.classList.remove('hidden');
+            showQuestion(0);
+        }
+
+        function showQuestion(index) {
+            const stage = stages[currentStageIndex];
+            const q = stage.questions[index];
+            
+            questionContentEl.classList.remove('hidden');
+            feedbackContentEl.classList.add('hidden');
+            
+            questionTextEl.innerHTML = q.text.replace(q.cmd, `<span class="text-blue-600 font-[system-ui] font-extrabold mx-1">${q.cmd}</span>`);
+            
+            optionsContainer.innerHTML = '';
+            q.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'bg-slate-50 border-4 border-slate-200 text-slate-800 hover:bg-sky-50 hover:border-blue-400 font-extrabold text-3xl py-4 w-20 rounded-2xl transition-all shadow-md active:scale-95';
+                btn.innerText = opt;
+                btn.onclick = () => handleAnswer(opt, q);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function handleAnswer(selectedOption, questionInfo) {
+            questionContentEl.classList.add('hidden');
+            feedbackContentEl.classList.remove('hidden');
+
+            const isCorrect = (selectedOption === questionInfo.answer);
+            const cmdText = `<span class="font-[system-ui] font-extrabold mx-1 text-slate-800 bg-slate-100 px-3 py-1 rounded-lg">${questionInfo.cmd}</span>`;
+
+            if (isCorrect) {
+                feedbackIconEl.innerText = '🎉';
+                feedbackTitleEl.className = 'text-3xl font-extrabold mb-2 text-green-500';
+                feedbackTitleEl.innerText = 'أحسنت!';
+                feedbackMessageEl.innerHTML = `لقد استعملت الأمر ${cmdText} عدد <span class="text-3xl text-blue-600 font-extrabold mx-1">${questionInfo.answer}</span> مرات.<br><br>هيا نكمل رحلة الطائرة! ✈️`;
+            } else {
+                feedbackIconEl.innerText = '😊';
+                feedbackTitleEl.className = 'text-3xl font-extrabold mb-2 text-amber-500';
+                feedbackTitleEl.innerText = 'لا بأس.';
+                feedbackMessageEl.innerHTML = `لقد استعملت الأمر ${cmdText} عدد <span class="text-3xl text-blue-600 font-extrabold mx-1">${questionInfo.answer}</span> مرات.<br>كل ضغطة جعلت الطائرة تتحرك خطوة واحدة.<br><br>هيا نكمل رحلة الطائرة! ✈️`;
+            }
+
+            btnContinue.onclick = () => {
+                currentQuestionIndex++;
+                const stage = stages[currentStageIndex];
+                
+                if (currentQuestionIndex < stage.questions.length) {
+                    showQuestion(currentQuestionIndex); 
+                } else {
+                    modalEl.classList.add('hidden');
+                    currentStageIndex++;
+                    if (currentStageIndex < stages.length) {
+                        loadStage(currentStageIndex);
+                    } else {
+                        showEndScreen();
+                    }
+                }
+            };
+        }
+
+        function showEndScreen() {
+            endModalEl.classList.remove('hidden');
+        }
+
+        // تشغيل اللعبة بالكامل فور تحميل الصفحة
+        window.onload = () => {
+            initGrid();
+            loadStage(0);
+        };
+    </script>
+</body>
+</html>
